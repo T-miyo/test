@@ -1,0 +1,20 @@
+#ナップザック問題
+#DP練習の回答
+
+# 入力
+N, W = map(int, input().split())
+A = [[] for _ in range(N)]
+for i in range(N):
+    w, v = map(int, input().split())
+    A[i] = [w, v]
+
+dp = [[0]*(W+1) for _ in range(N+1)]
+
+for i in range(N):
+    for j in range(W+1):
+        if j - A[i][0] >= 0:
+            dp[i+1][j] = max(dp[i][j], dp[i][j-A[i][0]]+A[i][1])
+        else:
+            dp[i+1][j] = dp[i][j]
+#        print(i,j,dp)
+print(dp[N][W])
