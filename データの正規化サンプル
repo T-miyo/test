@@ -1,0 +1,19 @@
+#データを扱いやすくするために補正する操作を正規化
+#線形変換を用いてデータの最小値と最大値がそれぞれ 0,1 となるよう補正することを表します
+#線形変換 Xi= Hi-Hmin/Hmax-Hmin
+
+
+# 入力
+N = int(input())
+H = list(map(int, input().split()))
+
+# 最小値と最大値を求める
+mi = min(H)
+ma = max(H)
+
+# 正規化したデータを求める
+X = [(h-mi)/(ma-mi) for h in H]
+
+# 答えを出力する
+print(*X)
+
