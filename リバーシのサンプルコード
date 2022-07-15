@@ -1,0 +1,394 @@
+from turtle import color
+import numpy as np
+
+"""
+どの方向に石が裏返るかをチェック
+"""
+def checkMobility(y, x, color):
+#    print(66,x)
+    # 注目しているマスの裏返せる方向の情報が入る
+    dir = 0
+ 
+    # 既に石がある場合はダメ
+    if(S[y, x] == color) or S[y, x] == "#":
+        return dir
+
+    ## 左
+    if(S[y, x-1] != color) or (S[y, x-1] != "#") or (S[y,x-1] != "."): # 直上に相手の石があるか
+            
+        x_tmp = x - 1
+        y_tmp = y
+ 
+        # 相手の石が続いているだけループ
+        while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+            x_tmp -= 1
+            
+        # 相手の石を挟んで自分の石があればdirを更新
+        if S[y_tmp,x_tmp] == color:
+            dir = dir | LEFT
+ 
+    ## 左上
+    if(S[y - 1, x - 1] != color) or (S[y - 1, x - 1] != "#") or (S[y - 1, x - 1] !="."): # 直上に相手の石があるか
+            
+        x_tmp = x - 1
+        y_tmp = y - 1
+            
+        # 相手の石が続いているだけループ
+        while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+            x_tmp -= 1
+            y_tmp -= 1
+            
+        # 相手の石を挟んで自分の石があればdirを更新
+        if S[y_tmp,x_tmp] == color:
+            dir = dir | UPPER_LEFT
+ 
+        ## 上
+        if(S[y - 1, x] != color) or (S[y - 1, x] != "#") or (S[y - 1, x] != "."): # 直上に相手の石があるか
+            
+            x_tmp = x
+            y_tmp = y - 1
+ #           print(x,y,S[y-1,x])
+            # 相手の石が続いているだけループ
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+                y_tmp -= 1
+            
+            # 相手の石を挟んで自分の石があればdirを更新
+            if S[y_tmp,x_tmp] == color:
+                dir = dir | UPPER
+ 
+        ## 右上
+        if(S[ y - 1, x + 1] != color) or (S[ y - 1, x + 1] != "#") or (S[ y - 1, x + 1] != "."): # 直上に相手の石があるか
+            
+            if x + 2 < N+2 or y - 2 > 0:
+                x_tmp = x + 1
+                y_tmp = y - 1
+                
+
+                # 相手の石が続いているだけループ
+                while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+                    x_tmp += 1
+                    y_tmp -= 1
+            
+            # 相手の石を挟んで自分の石があればdirを更新
+            if S[y_tmp,x_tmp] == color:
+                dir = dir | UPPER_RIGHT
+ 
+        ## 右
+        if(S[ y, x + 1] != color) or (S[ y, x + 1] != "#") or (S[ y, x + 1] != "."): # 直上に相手の石があるか
+            if x+2 < N+2:
+                x_tmp = x + 1
+                y_tmp = y
+                
+                # 相手の石が続いているだけループ
+                while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+                    x_tmp += 1
+            
+            # 相手の石を挟んで自分の石があればdirを更新
+            if S[y_tmp,x_tmp] == color:
+                dir = dir | RIGHT
+ 
+        ## 右下
+        if(S[ y + 1, x + 1] != color) or (S[ y + 1, x + 1] != "#") or (S[ y + 1, x + 1] != "."): # 直上に相手の石があるか
+            
+            x_tmp = x + 1
+            y_tmp = y + 1
+            
+            # 相手の石が続いているだけループ
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+                x_tmp += 1
+                y_tmp += 1
+            
+            # 相手の石を挟んで自分の石があればdirを更新
+            if S[y_tmp,x_tmp] == color:
+                dir = dir | LOWER_RIGHT
+ 
+        ## 下
+        if(S[y + 1, x] != color) or (S[y + 1, x] != "#") or (S[y + 1, x] != "."): # 直上に相手の石があるか
+            
+            x_tmp = x
+            y_tmp = y + 1
+            
+            # 相手の石が続いているだけループ
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+                y_tmp += 1
+ #               print(10,y_tmp)
+            # 相手の石を挟んで自分の石があればdirを更新
+            if S[y_tmp,x_tmp] == color:
+                dir = dir | LOWER
+ 
+        ## 左下
+        if(S[y + 1, x - 1] != color) or (S[y + 1, x - 1] != "#") or (S[y + 1, x - 1] != "."): # 直上に相手の石があるか
+            
+            x_tmp = x - 1
+            y_tmp = y + 1
+            
+            # 相手の石が続いているだけループ
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+                x_tmp -= 1
+                y_tmp += 1
+            
+            # 相手の石を挟んで自分の石があればdirを更新
+            if S[y_tmp,x_tmp] == color:
+                dir = dir | LOWER_LEFT
+ 
+        return dir
+
+"""
+石を置くことによる盤面の変化をボードに反映
+"""
+def flipDiscs(y, x, color):
+        
+        x_tmp = x
+        y_tmp = y
+        # 石を置く
+        S[y, x] = color
+#        print(55,x,x_tmp)
+        # 石を裏返す
+        # MovableDirの(y, x)座標をdirに代入
+        dir = MovableDir[y, x]
+ 
+        ## 左
+        if dir & LEFT: # AND演算子
+ 
+            x_tmp = x - 1
+ 
+            # 相手の石がある限りループが回る
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+ 
+                # 相手の石があるマスを自分の石の色に塗り替えている
+                S[y, x_tmp] = color
+ 
+                # さらに1マス左に進めてループを回す
+                x_tmp -= 1
+ 
+        ## 左上
+        if dir & UPPER_LEFT: # AND演算子
+ 
+            x_tmp = x - 1
+            y_tmp = y - 1
+ 
+            # 相手の石がある限りループが回る
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+ 
+                # 相手の石があるマスを自分の石の色に塗り替えている
+                S[y_tmp, x_tmp] = color
+                
+                # さらに1マス左上に進めてループを回す
+                x_tmp -= 1
+                y_tmp -= 1
+ 
+        ## 上
+        if dir & UPPER: # AND演算子
+ 
+            y_tmp = y - 1
+ 
+            # 相手の石がある限りループが回る
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+ 
+                # 相手の石があるマスを自分の石の色に塗り替えている
+                S[y_tmp, x] = color
+ 
+                # さらに1マス上に進めてループを回す
+                y_tmp -= 1
+ 
+        ## 右上
+        if dir & UPPER_RIGHT: # AND演算子
+ 
+            x_tmp = x + 1
+            y_tmp = y - 1
+ 
+            # 相手の石がある限りループが回る
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+ 
+                # 相手の石があるマスを自分の石の色に塗り替えている
+                S[y_tmp, x_tmp] = color
+ 
+                # さらに1マス右上に進めてループを回す
+                x_tmp += 1
+                y_tmp -= 1
+ 
+        ## 右
+        if dir & RIGHT: # AND演算子
+ 
+            x_tmp = x + 1
+ 
+            # 相手の石がある限りループが回る
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+ 
+                # 相手の石があるマスを自分の石の色に塗り替えている
+                S[y, x_tmp] = color
+                
+                # さらに1マス右に進めてループを回す
+                x_tmp += 1
+ 
+        ## 右下
+        if dir & LOWER_RIGHT: # AND演算子
+ 
+            x_tmp = x + 1
+            y_tmp = y + 1
+ 
+            # 相手の石がある限りループが回る
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+ 
+                # 相手の石があるマスを自分の石の色に塗り替えている
+                S[y_tmp, x_tmp] = color
+ 
+                # さらに1マス右下に進めてループを回す
+                x_tmp += 1
+                y_tmp += 1
+ 
+        ## 下
+        if dir & LOWER: # AND演算子
+ 
+            y_tmp = y + 1
+#            print(y_tmp,x_tmp, S[y_tmp,x])
+            # 相手の石がある限りループが回る
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+ 
+                # 相手の石があるマスを自分の石の色に塗り替えている
+                S[y_tmp, x] = color
+#                print(S[y_tmp,x_tmp])
+                # さらに1マス下に進めてループを回す
+                y_tmp += 1
+ 
+        ## 左下
+        if dir & LOWER_LEFT: # AND演算子
+ 
+            x_tmp = x - 1
+            y_tmp = y + 1
+ 
+            # 相手の石がある限りループが回る
+            while S[y_tmp,x_tmp] != color and S[y_tmp,x_tmp] != "#" and S[y_tmp,x_tmp] != ".":
+                
+                # 相手の石があるマスを自分の石の色に塗り替えている
+                S[y_tmp, x_tmp] = color
+ 
+                # さらに1マス左下に進めてループを回す
+                x_tmp -= 1
+                y_tmp += 1
+
+"""
+MovablePosとMovableDirの更新
+"""
+def initMovable(color):
+ 
+    # MovablePosの初期化（すべてFalseにする）
+    MovablePos[:, :] = False
+ 
+    # すべてのマス（壁を除く）に対してループ
+    for x in range(1,N+1):
+        for y in range(1,N+1):
+#            print(100,x,y)
+            # checkMobility関数の実行
+            dir = checkMobility(y, x, color)
+ 
+            # 各マスのMovableDirにそれぞれのdirを代入
+            MovableDir[y, x] = dir
+ 
+            # dirが0でないならMovablePosにTrueを代入
+            if dir != 0:
+                MovablePos[y, x] = True
+
+"""
+石を置く
+"""
+def move(y, x, color):
+ 
+    # 置く位置が正しいかどうかをチェック
+    if x < 1 or N < x:
+        return False
+    if y < 1 or N < y:
+        return False
+#    if MovablePos[y, x] == 0:
+#        return False
+ 
+    # 石を裏返す
+    flipDiscs(y, x, color)
+ 
+    # 手番を進める
+#    self.Turns += 1
+ 
+    # 手番を交代する
+#    self.CurrentColor = - self.CurrentColor
+        
+    # MovablePosとMovableDirの更新
+ #   initMovable("R")
+ 
+#    return True
+
+# マスの状態
+EMPTY = -1
+R = 0
+G = 0
+B = 0
+W = -2
+
+N, M = map(int, input().split())
+
+#マスサイズ
+BOARD_SIZE = N
+ 
+# 方向(2進数)
+NONE = 0
+LEFT = 2**0 # =1
+UPPER_LEFT = 2**1 # =2 
+UPPER = 2**2 # =4
+UPPER_RIGHT = 2**3 # =8
+RIGHT = 2**4 # =16
+LOWER_RIGHT = 2**5 # =32
+LOWER = 2**6 # =64
+LOWER_LEFT = 2**7 # =128
+
+
+S = []
+S.append(list("#"*(N+2)))
+for i in range(N):
+    lstr = ""
+    lstr = "#"
+    lstr += input()
+    lstr += "#"
+    lstr = list(lstr)
+    S.append(lstr)
+#    S.append(list(input()))
+S.append(list("#"*(N+2)))
+#print(S)
+S = np.array(S)
+
+X = []
+for i in range(M):
+    t, l = map(int, input().split())
+    X.append([l, t])
+#print(S)
+
+# 置ける場所と石が返る方向
+MovablePos = np.zeros((N + 2, N + 2), dtype=int)
+MovableDir = np.zeros((N + 2, N + 2), dtype=int)
+for i in range(M):
+    ty, yx = X[i]
+    if i % 3 == 0:
+        Color = "R"
+    elif i % 3 == 1:
+        Color = "G"
+    elif i % 3 == 2:
+        Color = "B"
+    initMovable(Color)
+    #d = checkMobility(2,4,"R")
+    #print(d)
+    move(ty,yx,Color)
+
+R = np.count_nonzero(S == "R")
+G = np.count_nonzero(S == "G")
+B = np.count_nonzero(S == "B")
+#print(S[1:N+1,1:N+1])
+
+for i in range(1,N+1):
+    amap = "".join(S[i,1:N+1])
+    print(amap)
+
+
+if (R > G > B) or (R > B > G):
+    print("R")
+elif (G >= R > B) or (G > B > R):
+    print("G")
+else:
+    print("B")
