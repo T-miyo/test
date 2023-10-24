@@ -1,0 +1,27 @@
+#連分数を解く際に作成
+#連分数の処理の勉強になった為メモ
+#Paizaの練習問題から抜粋
+#N個の変数を含む、以下のような形の連分数の値を計算
+#問題例
+#3 与えられる変数の数
+#2
+#3
+#4
+#連分数の計算して得られる既約分数の分子と分母を以下の形式で出力
+#aが分子、bが分母
+
+N = int(input())
+
+x = [int(input()) for _ in range(N)]
+a = 0
+b = 0
+for i in reversed(range(1, N)):
+#    print(x[i], i)
+    if i == N-1:
+        a = x[i-1]*x[i] + 1
+        b = x[i]
+    elif 1 <= i < N-1:
+        sub = a
+        a = x[i-1]*sub + b
+        b = sub
+print(a, b)
