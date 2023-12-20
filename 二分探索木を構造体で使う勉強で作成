@@ -1,0 +1,45 @@
+このコードでは、Nodeクラスを使用して二分探索木を表現しています。各ノードは、value属性と、左の子ノードを指すleft属性、右の子ノードを指すright属性を持ちます。
+二分探索木のノードはtreeディクショナリに格納され、各ノードの値とノードそのものを関連付けます。 
+ツリーの構築は、親ノードと新しいノードを作成し、親ノードの左または右の子ノードとして新しいノードを設定することで行われます。
+クエリの処理では、与えられたノードの値を基に対応するノードを取得し、左または右の子ノードの値を表示しています。 これにより、提供されたコードと同じ機能を持つ二分探索木が作成されます。
+ただし、プログラムの動作には入力の受け取りなどが含まれているため、このままでは動作しない可能性があります。必要に応じて適切な入力の処理を追加してください。
+
+from collections import defaultdict
+
+class Node:
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
+
+N, K, R = map(int, input().split())
+
+tree = defaultdict(Node)
+root = Node(R)
+
+tree[R] = root
+
+for i in range(N - 1):
+    a, b, LR = input().split()
+    a = int(a)
+    b = int(b)
+
+    parent = tree[a]
+    new_node = Node(b)
+
+    if LR == "L":
+        parent.left = new_node
+    else:
+        parent.right = new_node
+
+    tree[b] = new_node
+
+for i in range(K):
+    v, lr = input().split()
+    v = int(v)
+
+    node = tree[v]
+    if lr == "L":
+        print(node.left.value)
+    else:
+        print(node.right.value)
