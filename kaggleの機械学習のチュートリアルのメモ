@@ -31,3 +31,13 @@ step_2.check()
 
 4、実践では欠損値がある為考慮した処理が必要になる
 演習では「melbourne_data = melbourne_data.dropna(axis=0)」で欠損を削除している
+
+5、予測ターゲットをyに設定する
+今回は住宅価格なので「y = melbourne_data.Price」
+
+6、予測で使用する特徴の項目(列)を選択する
+「melbourne_features = ['Rooms', 'Bathroom', 'Landsize', 'Lattitude', 'Longtitude']
+　X = melbourne_data[melbourne_features]」
+
+7、「X.describe()」と「X.head()」で住宅価格を予測するために使用するデータを簡単に確認
+　headメゾットは先頭から5つまでのデータを表示
