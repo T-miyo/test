@@ -25,3 +25,6 @@ newest_home_age = 14
 
 # Checks your answers
 step_2.check()
+
+3、「melbourne_data.columns」でデータの項目を表示して使う項目を確認
+(読み込んだデータフレーム).columns
