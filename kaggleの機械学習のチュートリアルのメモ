@@ -28,3 +28,6 @@ step_2.check()
 
 3、「melbourne_data.columns」でデータの項目を表示して使う項目を確認
 (読み込んだデータフレーム).columns
+
+4、実践では欠損値がある為考慮した処理が必要になる
+演習では「melbourne_data = melbourne_data.dropna(axis=0)」で欠損を削除している
