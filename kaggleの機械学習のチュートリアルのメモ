@@ -1,2 +1,27 @@
 #実務で関われない為、実践レベルのデータ分析を行うための基本的な作業を学ぶ事が目的
 #pythonでpandasを使用して作業しながらやってみる
+
+1、csvファイルのデータをディレクトリ設定して読み込んで「home_data.describe()」で表示
+import pandas as pd
+
+# Path of the file to read
+iowa_file_path = '../input/home-data-for-ml-course/train.csv'
+
+# Fill in the line below to read the file into a variable home_data
+home_data = pd.read_csv(iowa_file_path)
+
+# Call line below with no argument to check that you've loaded the data correctly
+step_1.check()
+
+# Print summary statistics in next line
+home_data.describe()
+
+2、表示されたデータから直接数値を設定
+# What is the average lot size (rounded to nearest integer)?
+avg_lot_size = 10517
+
+# As of today, how old is the newest home (current year - the date in which it was built)
+newest_home_age = 14
+
+# Checks your answers
+step_2.check()
