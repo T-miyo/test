@@ -41,3 +41,17 @@ step_2.check()
 
 7、「X.describe()」と「X.head()」で住宅価格を予測するために使用するデータを簡単に確認
 　headメゾットは先頭から5つまでのデータを表示
+
+8、scikit-learn ライブラリを使用してモデルを作成
+「from sklearn.tree import DecisionTreeRegressor
+
+# Define model. Specify a number for random_state to ensure same results each run
+melbourne_model = DecisionTreeRegressor(random_state=1)
+
+# Fit model
+melbourne_model.fit(X, y)」
+チュートリアルの為、トレーニングデータの最初の数行に対して予測してみる(実際には、すでに価格がわかっている住宅ではなく、市場に登場する新しい住宅を予測する必要がある)
+「print("Making predictions for the following 5 houses:")
+print(X.head())
+print("The predictions are")
+print(melbourne_model.predict(X.head()))」
