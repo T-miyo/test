@@ -138,3 +138,10 @@ rf_val_mae = mean_absolute_error(rf_val_predictions, val_y)
 print("Validation MAE for Random Forest Model: {:,.0f}".format(rf_val_mae))」
 
 13、ランダム フォレスト モデルを構築し、それをすべての X と y でトレーニング
+
+14、コードセルを実行して、コンテストに提出するために使用できる予測を含む CSV ファイルを生成
+「# Run the code to save predictions in the format used for competition scoring
+
+output = pd.DataFrame({'Id': test_data.Id,
+                       'SalePrice': test_preds})
+output.to_csv('submission.csv', index=False)」
