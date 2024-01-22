@@ -1,5 +1,9 @@
 #実務で関われない為、実践レベルのデータ分析を行うための基本的な作業を学ぶ事が目的
 #pythonでpandasを使用して作業しながらやってみる
+#Label Encoding
+文字列データはそのまま学習に使うことができません。
+そこで、文字列データに対してLabel Encodingを行います。
+Label Encodingとは、文字列等のデータを数値のラベルに変換することを指します。
 
 1、csvファイルのデータをディレクトリ設定して読み込んで「home_data.describe()」で表示
 import pandas as pd
