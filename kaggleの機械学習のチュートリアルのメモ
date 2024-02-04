@@ -149,3 +149,15 @@ print("Validation MAE for Random Forest Model: {:,.0f}".format(rf_val_mae))」
 output = pd.DataFrame({'Id': test_data.Id,
                        'SalePrice': test_preds})
 output.to_csv('submission.csv', index=False)」
+
+15、欠損値の補完が完了したら、特徴量の変換処理を行います。
+特徴量の変換処理を行う理由は、文字列であるカテゴリ変数は、機械学習のモデルで解釈できないためです。
+そのため、文字列データを数値データに変換する必要があります。
+変換方法はいくつか存在しますが、ここでは以下の2つの変換手法を使用
+one-hot encoding：カテゴリ変数に「大小、良し悪し、高い低い」と言った尺度がある
+one-hotエンコーディングは、pandas.DataFrameを使用します。
+pandas.DataFrameによるone-hot encodingは、デフォルトでデータ型がobjectまたはcategoryとなっている列の全データをone-hot encoding処理する仕様となっています。
+一方、数値（int, float）やbool型の列は、デフォルトでone-hot encodingの変更対象外となります。
+その為、先にlabel encodingをしておくと楽になる
+label encoding：上記以外
+データを1つ1つ確認しながら、label encodingの対象となるデータを抽出
