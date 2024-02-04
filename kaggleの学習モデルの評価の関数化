@@ -1,0 +1,35 @@
+機械学習モデルの評価を関数化
+まずKaggle House PricesのEvaluationを確認すると、「提出物はRoot-Mean-Squared-Rrror(RMSE)」で評価されることがわかります。
+RMSEとは二乗平均平方誤差と言われ、yiを観測値、
+yi`を予測値とすると、定義式は以下のようになります。
+
+RMSE = √((1/n)*Σ(yi-yi`)) (k=1, n)
+
+評価はモデルを用いて学習を行うたびに実施するので、関数化しておきます。
+
+以下がコード
+from sklearn.model_selection import KFold
+from sklearn.metrics import mean_squared_error
+
+def run_cv(model):
+    cv = KFold(n_splits=3, random_state=42, shuffle=True)
+    rmse_results = []
+    models = []
+    for trn_index, val_index in cv.split(X_train):
+        X_trn, X_val = X_train.loc[trn_index], X_train.loc[val_index]
+        y_trn, y_val = y_train[trn_index], y_train[val_index]
+        # モデルの学習
+        model.fit(X_trn, y_trn)
+        pred = model.predict(X_val)
+        # モデルの精度を算出
+        rmse = np.sqrt(mean_squared_error(y_val, pred))
+        print("RMSE:", rmse)
+        rmse_results.append(rmse)
+        models.append(model)
+
+    print(rmse_results)
+    print("Average:", np.mean(rmse_results))
+    return models
+
+こちらのコードは、scikit-learnのモデルのインスタンスを渡すと、k=3のKFoldと呼ばれるモデル評価手法で、平均精度を算出する関数です。
+モデルを評価する方法はKFoldの他に様々な種類があります
