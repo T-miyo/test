@@ -161,3 +161,8 @@ pandas.DataFrameによるone-hot encodingは、デフォルトでデータ型が
 その為、先にlabel encodingをしておくと楽になる
 label encoding：上記以外
 データを1つ1つ確認しながら、label encodingの対象となるデータを抽出
+
+16、LightGBMによる学習と予測
+ここまででデータの準備、モデルの選定、モデルの評価方法の明確化が完了
+モデルの選定パートで適用するモデルとして選定した「LightGBM」の実装
+”木構造を用いた勾配ブースティングのフレームワーク”
