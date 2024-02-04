@@ -166,3 +166,55 @@ label encoding：上記以外
 ここまででデータの準備、モデルの選定、モデルの評価方法の明確化が完了
 モデルの選定パートで適用するモデルとして選定した「LightGBM」の実装
 ”木構造を用いた勾配ブースティングのフレームワーク”
+以下に実装の一例を記載(kaggle内などに幾つも実装コードがある)
+import lightgbm as lgb
+
+lgb_params = {
+    "objective":"regression",
+    "metric": "rmse"
+}
+
+cv = KFold(n_splits=3, random_state=42, shuffle=True)
+rmse_results = []
+lgbm_models = []
+# テストデータに対する予測結果を格納するための空の配列
+test_preds = np.zeros(len(X_test))
+
+for trn_index, val_index in cv.split(X_train, y_train):
+    X_trn, X_val = X_train.loc[trn_index], X_train.loc[val_index]
+    y_trn, y_val = y_train[trn_index], y_train[val_index]
+    
+    train_lgb = lgb.Dataset(X_trn, y_trn)
+    validation_lgb = lgb.Dataset(X_val, y_val)
+    model = lgb.train(
+        lgb_params, train_lgb, 
+        num_boost_round=1000, valid_sets=[train_lgb, validation_lgb], 
+        verbose_eval=10, 
+        early_stopping_rounds=100
+        )
+    pred = model.predict(X_val)
+    rmse = np.sqrt(mean_squared_error(y_val, pred))
+    print("RMSE:", rmse)
+    rmse_results.append(rmse)
+    lgbm_models.append(model)
+
+    test_preds += model.predict(X_test) / cv.n_splits
+
+print(rmse_results)
+print("Average:", np.mean(rmse_results))
+
+簡単にコードの説明をします。
+
+まず、KFoldで、用意したトレーニングデータを3分割(n_splits=3)し、そのうちの1つをテストデータ、残りの2つを学習データに分けています。
+また、テストデータに対して過度に精度の高いモデルになることを防ぐために、検証用のバリデーションデータを用意しています。
+num_boost_roundは、ブースティングの反復回数、valid_setsにはバリデーションデータをリストで指定します。このあたりは、公式ドキュメントに従ってパラメータを設定します。
+verbose_evalは、学習過程の表示するサイクルです。ここではひとまず10を設定しています。
+early_stopping_roundは、過学習を回避するための早期終了処理です。(参考: https://rin-effort.com/2019/12/29/machine-learning-6/)
+※verbose_eval=10, early_stopping_rounds=100の部分はバージョンの違いでエラーになった為削除して実施
+
+17、テストデータで予測した結果を提出
+# サンプル提出ファイルの予測値列の値を変更
+submission = pd.read_csv('../input/house-prices-advanced-regression-techniques/sample_submission.csv')
+submission['SalePrice']  = test_preds
+# 提出ファイルを出力
+submission.to_csv("submission.csv", index=False)
