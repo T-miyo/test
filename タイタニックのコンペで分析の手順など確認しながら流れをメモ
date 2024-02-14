@@ -35,16 +35,70 @@ NaNはデータの欠損を表します。
 　Cabinカラムには、147種類の行がある為、確からしい値入れることも難しいという判断で分析には除外と判断
 
 　Ageの欠損値の対応をします。
-　Ageでは分布がある程度予測できるものではあるので、中央値or平均値の値がより確からしいものを使うアプローチをしています。
-　まずは基本統計量を見るところから
-　中央値と平均値は基本統計量から出ているのですが、最頻値だけないので計算します。
-　分布より今回は平均値でも中央値でも最頻値でも問題がなさそうです。
-　外れ値の影響が少ない中央値を採用
-※Age(年齢)とFare(料金)はそれぞれの中央値、Embarked(出港地)はS(Southampton)を代入
-　まずはPclass(チケットクラス), Sex(性別), Age(年齢), Fare(料金), Embarked(出港地)を使用します。
-　また、機械が予測できるようにダミー変数に変換します。
-　（現在、sexの項目はmaleとfemaleがありますが、これを行うことでsex_maleとsex_femaleの２つに変換されます。
-　maleならsex_maleが１、違うなら０が代入されます。）
+　Ageは、欠損値が比較的多く (計263箇所) 、
+  平均値や中央値で補完してしまうと、元のヒストグラムのバランスを崩してしまうことになる。
+  そのため、機械学習のランダムフォレストを用いて補完を行なっていく。
+※Ageの補完に適するパラメータを選定する
+　数字化できていない項目を数字化する
+　ランダムフォレストを用いてAgeを予測し、保管する
+　trainデータとtestデータを組み合わせる
+　組み合わせたデータからAgeが欠損している行を削除
+　作ったデータを元にランダムフォレストのモデルを構築
+　上記のモデルを使って、Ageを補完を行う
+　モデルの確からしさを判断するため、欠損値補完前後のヒストグラムを比較する
+　現在与えられている情報からAge (年齢) を予測するパラメータとして、下記の項目を選定
+　パラメータ：Pclass, Sex, SibSp, Parch, Fare
+　＊乗船港は年齢に影響を与えないと考え除外
+　　Sexはカテゴリーデータ (female, male) の文字列で与えられているので、数字化を行う
+　＊数字化においては、最終予測の機械学習時に変換が必要になるため、元データを変換する
+具体的なコード
+# map関数を用いてSexの文字をそれぞれの数字に変換する
+datasets = [df_train, df_test]
+for df in datasets:
+    df['Sex'] = df['Sex'].map( {'female': 0, 'male': 1} ).astype(int)
+機械学習(ランダムフォレスト)を用いて欠損値のAgeを予測する
+以下がコード
+# ランダムフォレストをインポートする
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
+
+# パラメータをピックアップし、リストに代入しておく
+features = ["Pclass", "Sex", "SibSp", "Parch", "Fare"]
+
+# trainデータとtestデータを縦に連結
+df_concat = pd.concat([df_train, df_test], ignore_index=True)
+
+# 欠損値のない行をトレーニングデータとして使用
+train_data = df_concat.dropna(subset=['Age'])
+
+# データの前処理
+X_train = train_data[features]
+y_train = train_data['Age']
+
+# ランダムフォレスト回帰モデルのトレーニング
+rf_model = RandomForestRegressor(random_state=42)
+rf_model.fit(X_train, y_train)
+
+# モデルを用いてtrainデータのAgeを予測し補完
+df_train.loc[df_train['Age'].isnull(), 'Age'] = rf_model.predict(df_train.loc[df_train['Age'].isnull(), features] )
+
+# Testデータも同様に予測値を適用する
+df_test.loc[df_test['Age'].isnull(), 'Age'] = rf_model.predict(df_test.loc[df_test['Age'].isnull(), features] )
+
+# 元のヒストグラムと傾向性が違っていないかを確認する
+df_concat_after = pd.concat([df_train, df_test], ignore_index=True)
+
+fig, ax = plt.subplots(1,2,figsize=(12,5), sharey=True)
+sns.histplot(data=df_concat, x='Age', bins=30, color='gray', stat='percent', ax=ax[0])
+sns.histplot(data=df_concat_after, x='Age', bins=30, stat='percent', ax=ax[1])
+plt.show()
+
+・Embarkedは最頻値で補完
+・Fareは、中央値で補完を行うことを考える。ただし、FareとPclassで関係性が高いと思うため、Pclassに応じた中央値での補完
+ex)# PclassごとのFareの中央値を計算したpivot_tableの作成
+   median_Fare = df_train.pivot_table(index='Pclass', values='Fare', aggfunc='median')
+   median_Fare
+・データの確認と理解により「Name」「Ticket」「Cabin」は学習データには使わない
 ・
 ・機械に学習をさせていきます。
 　RandomForestClassifierのn_estimatorsとmax_depthを変えるなかで最も良い予測モデルを作成します。
