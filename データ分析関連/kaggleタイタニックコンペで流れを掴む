@@ -1,0 +1,112 @@
+#スコアは74.88のコード
+流れや最低限の理解は確認出来たので
+次回は実践。
+参加出来るコンペをやってみる
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+warnings.filterwarnings('ignore')
+#トレーニングデータとテストデータを読み込む
+train = pd.read_csv("/kaggle/input/titanic/train.csv")
+test = pd.read_csv("/kaggle/input/titanic/test.csv")
+#先頭のデータで軽くデータを確認
+train.head()
+
+#データの欠損を確認
+train.isnull().sum()
+test.isnull(.sum()
+
+# 欠損のデータにSの割合が全体的に多いのでEmbarkedのSを代入 
+train["Embarked"] = train["Embarked"].fillna("S")
+test["Embarked"] = test["Embarked"].fillna("S")
+# Ageの平均値を代入 
+train["Age"] = train["Age"].fillna(train["Age"].median())
+test["Age"] = test["Age"].fillna(test["Age"].median())
+# 欠損値が多いのでCabinを削除 
+train = train.drop('Cabin',axis='columns') 
+test = test.drop('Cabin',axis='columns') 
+# Fareの平均値を代入 
+train["Fare"] = train["Fare"].fillna(train["Fare"].median())
+test["Fare"] = test["Fare"].fillna(test["Fare"].median())
+
+test.info()
+
+#カテゴリカル変数では学習に用いることができないので数値に変換
+# カテゴリカル変数の変換
+train.replace({'Sex': {'male': 0, 'female': 1}}, inplace=True)
+test.replace({'Sex': {'male': 0, 'female': 1}}, inplace=True)
+
+train.replace({'Embarked': {'S': 0, 'C': 1, 'Q' : 2}}, inplace=True)
+test.replace({'Embarked': {'S': 0, 'C': 1, 'Q' : 2}}, inplace=True)
+
+#既存の特徴量かParchとSibSpを見ると同乗した親族が多いほど生存率が低いのがわかる。
+ParchとSibSpを組み合わせてFamilySizeという新たなカラムを作成します。
+コード内の1は乗船した本人の数ら新しい特徴量を作成
+# 1は乗車本人の数
+train['FamilySize'] = train['Parch'] + train['SibSp'] + 1
+test['FamilySize'] = test['Parch'] + test['SibSp'] + 1
+# 分布を確認
+sns.countplot(x='FamilySize', data = train, hue = 'Survived')
+plt.show()
+test.head()
+
+#相関関係の可視化
+目的変数（Survived）と相関関係が強いカラムを学習
+そのため、Survivedと他のカラムの相関関係を確認
+今回は、ピアソンの積率相関係数、スピアマンの順位連関係数を用いて相関関係を確認
+# 相関係数の算出
+pearson = train.corr(numeric_only=True,method='pearson') 
+spearman = train.corr(numeric_only=True,method='spearman')
+ 
+# ヒートマップで可視化 
+sns.heatmap(pearson, annot=True) 
+plt.title('Correlation coefficient (pearson)',fontsize=18) 
+plt.ylim(pearson.shape[1],0)
+plt.show() 
+
+sns.heatmap(spearman, annot=True) 
+plt.title('Correlation coefficient (spearman)',fontsize=18) 
+plt.ylim(spearman.shape[1],0) 
+plt.show()
+
+#Survived : Fareとは正の相関関係、Pclassとは負の相関関係がある。
+Pclass : Survived、Age、Fareと負の相関関係がある。
+Age : Pclass、SibSp、Parchと負の相関関係がある。
+SibSp : Ageと負の相関関係、Parch、Fareと正の相関関係がある。
+Parch : SibSp、Fareと相関関係がある。
+Fare : Pclassと負の相関関係、Survived、Parchと正の相関関係がある。
+
+#モデルの学習
+ランダムフォレストを実装してみる
+from sklearn.ensemble import RandomForestClassifier as rfc
+def random_forest(train_data, test_data, purpose_variable, explanatory_variable):
+
+  #modelを構築
+  rc = rfc(random_state=100)
+  # 目的変数の値を取得
+  target = train_data[purpose_variable].values
+  # 説明変数の値を取得
+  train_features = train_data[explanatory_variable].values
+  #modelを学習
+  rc.fit(train_features, target)
+  # 説明変数の値を取得（test）
+  test_features = test_data[explanatory_variable].values
+  # 学習したモデルで分類
+  predict = rc.predict(test_features)
+  return predict
+
+# 目的変数
+purpose_variable = ["Survived"]
+# 説明変数
+explanatory_variable = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked", "FamilySize"]
+# 学習  
+pridict = random_forest(train, test, purpose_variable, explanatory_variable)
+
+#予測できた結果と生存者IDを結合してCSVファイルに変換
+id_name = str("PassengerId")
+predict_id_name = str("Survived")
+submit = pd.DataFrame({id_name: test[id_name],predict_id_name: pridict})
+submit.to_csv("submit.csv",header=True,index=False)
+print("Your submission was successfully saved!")
