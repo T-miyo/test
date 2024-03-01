@@ -1,17 +1,107 @@
-# This Python 3 environment comes with many helpful analytics libraries installed
-# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
-# For example, here's several helpful packages to load
+#スコアは79.12のコード
+タイタニックコンペに似たコンペに挑戦して作成したモデル
 
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+#データ分析に使う基本的なモジュールをインポート
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+warnings.filterwarnings('ignore')
+#トレーニングデータとテストデータを読み込む
+train = pd.read_csv("/kaggle/input/tabular-playground-series-apr-2021/train.csv")
+test = pd.read_csv("/kaggle/input/tabular-playground-series-apr-2021/test.csv")
 
-# Input data files are available in the read-only "../input/" directory
-# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+#トレーニングデータとテストデータの内容を確認
+train.info()
+test.info()
 
-import os
-for dirname, _, filenames in os.walk('/kaggle/input'):
-    for filename in filenames:
-        print(os.path.join(dirname, filename))
+#欠損値の有無と数を確認
+train.isnull().sum()
+test.isnull().sum()
 
-# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
-# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
+#目的変数「Survived」に影響のある説明変数の数値型の欠損値を平均値で補填する
+for col in ['Age', 'Fare']:
+    train[col] = train[col].fillna(train[col].mean())
+    test[col] = test[col].fillna(test[col].mean())
+    print(train[col].isnull().sum())
+#文字列の欠損を最頻の文字で欠損値に補填
+for col in ['Embarked', 'Ticket']:
+    train[col] = train[col].fillna(train[col].mode()[0])
+    test[col] = test[col].fillna(test[col].mode()[0])
+    print(train[col].isnull().sum())
+#「Cabin」に関しては種類が多かった事から欠損値は0，文字列があれば1に変換して欠損値の補填
+col = 'Cabin'
+train[col] = train[col].notnull().astype(int)
+test[col] = test[col].notnull().astype(int)
+print(train[col].isnull().sum())
+上記の欠損値の補填と同時に欠損値がなくなったかも確認している
+
+#モデルの学習に使わない列を削除(チケットはPclassと関わるので使う方が精度が良くなるかも)
+train.drop(['Name', 'Ticket'], axis = 1, inplace = True)
+test.drop(['Name', 'Ticket'], axis = 1, inplace = True)
+
+#モデル学習の際は数値に変更する為、「sex」「Embarked」列のユニークな値の種類を確認
+print(train["Sex"].unique())
+#「embark_town」のユニークな値を表示
+print(train["Embarked"].unique())
+
+#確認した値に対応させて数値型に変更(onehotエンコーディング)
+change_eva = {'male': 0, 'female': 1}
+train['Sex'] = train['Sex'].map(change_eva)
+change_eva2 = {'S': 0, 'C': 1, "Q" : 2}
+train['Embarked'] = train['Embarked'].map(change_eva2)
+change_eva = {'male': 0, 'female': 1}
+test['Sex'] = test['Sex'].map(change_eva)
+change_eva2 = {'S': 0, 'C': 1, "Q" : 2}
+test['Embarked'] = test['Embarked'].map(change_eva2)
+
+#一通り思いつくデータのクリーニングを終えたのでモデル学習のフェーズに移行
+#学習データとして使う列を指定してXに代入、目的変数の「Survived」をyへ代入
+features_selected = ['Pclass', 'Sex', 'Age','Embarked','Parch','SibSp','Fare','Cabin']
+X = train[features_selected]
+y = train['Survived']
+X.head()
+
+#トレーニングデータをトレーニングと検証のデータに分ける
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train.shape, y_train.shape, X_test.shape, y_test.shape
+#ｘは説明変数、ｙは目的変数。今回はトレーニングに８割、検証に2割で分割
+
+#慣れる事も目的な為、3つの学習モデルでスコアを出してみる
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from xgboost import XGBClassifier
+model3 = XGBClassifier()
+
+model = HistGradientBoostingClassifier(max_iter=7, max_depth=6, max_leaf_nodes=18, learning_rate=0.58)
+model.fit(X_train, y_train)
+model2 = RandomForestClassifier()
+model2.fit(X_train, y_train)
+model3.fit(X_train, y_train)
+#fitで学習
+
+#学習したモデルに検証用のテストデータで目的変数を予測
+y_pred = model.predict(X_test)
+y_pred2 = model2.predict(X_test)
+y_pred3 = model3.predict(X_test)
+
+#予測の精度を確認
+acc = accuracy_score(y_test, y_pred)
+acc2 = accuracy_score(y_test, y_pred2)
+acc3 = accuracy_score(y_test, y_pred3)
+print(f'Accuracy: {acc:.4f}')
+print(f'Accuracy: {acc2:.4f}')
+print(f'Accuracy: {acc3:.4f}')
+
+#一番スコアが良いモデルを使って提出用のテストデータで予測
+predict = model3.predict(test)
+
+#提出用の形にして提出用のcsvファイル作成
+PassengerId = test.PassengerId
+submission = {'PassengerId': PassengerId, 'Survived': predict}
+df_submission = pd.DataFrame(data=submission)
+df_submission.to_csv('submission.csv', index=False)
