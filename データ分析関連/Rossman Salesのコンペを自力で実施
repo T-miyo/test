@@ -1,0 +1,5 @@
+※データの意味が分かり辛いコンペが多く感じたので
+データの項目の説明があった為兎に角解いてみる
+
+#データを読み込む際、「low_memory = False」は容量が大きいファイルを読み込む際、メモリーを効率的に使うためのオプション
+df = pd.read_csv('/kaggle/input/rossmann-store-sales/train.csv', low_memory=False)
