@@ -3,3 +3,82 @@
 
 #データを読み込む際、「low_memory = False」は容量が大きいファイルを読み込む際、メモリーを効率的に使うためのオプション
 df = pd.read_csv('/kaggle/input/rossmann-store-sales/train.csv', low_memory=False)
+
+#参考にしたコードから基本的に使うライブラリをインポート
+# Data Manipulation Libraries
+import pandas as pd
+import numpy as np
+
+# Plotting Libraries
+from matplotlib import pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+
+# Machine Learning Libraries
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
+
+#ストア情報のみのファイル
+# Load Store Dataset
+
+raw_store_df = pd.read_csv('/kaggle/input/rossmann-store-sales/store.csv')
+print(f"raw_store_df shape: {raw_store_df.shape}")
+raw_store_df
+
+#トレーニングデータとテストデータの読み込み
+# Load Train and Test Dataset
+
+raw_train_df = pd.read_csv('/kaggle/input/rossmann-store-sales/train.csv', low_memory = False)
+raw_test_df = pd.read_csv('/kaggle/input/rossmann-store-sales/test.csv')
+print(f"raw_train_df shape: {raw_train_df.shape}")
+print(f"raw_test_df shape: {raw_test_df.shape}")
+
+#ストア情報のデータも分析に有用と感じたのでトレーニングデータとテストデータに追加
+#PromoIntervalはSalesへの影響はあるがプロモーションの間隔で影響が少ないのと扱いが難しいと感じたので除外
+train_merged_df = raw_train_df.merge(raw_store_df, how='left', on='Store')
+train_merged_df = train_merged_df.drop(['PromoInterval'], axis=1)
+train_merged_df
+
+test_merged_df = raw_test_df.merge(raw_store_df, how='left', on='Store')
+test_merged_df = test_merged_df.drop(['PromoInterval'], axis=1)
+test_merged_df
+
+#店舗が閉店していれば売り上げは0は分かる事なので閉店は除外
+train_merged_df = train_merged_df[train_merged_df['Open']!=0]
+#test_merged_df = test_merged_df[test_merged_df['Open']!=0]
+train_merged_df.head()
+
+#Assortment、StateHolidayのデータを学習する際に処理しやすいように数値に変換（文字列だとダミー変数にする際や学習の際にエラーになることもある為）
+train_merged_df['Assortment'] = train_merged_df['Assortment'].map({'a': 0, 'b': 1, "c": 2})
+test_merged_df['Assortment'] = test_merged_df['Assortment'].map({'a': 0, 'b': 1, "c": 2})
+train_merged_df["Assortment"]
+
+train_merged_df['StateHoliday'] = train_merged_df['StateHoliday'].map({"0":0, 'a': 1, 'b': 2, "c": 3})
+test_merged_df['StateHoliday'] = test_merged_df['StateHoliday'].map({"0":0, 'a': 1, 'b': 2, "c": 3})
+train_merged_df["StateHoliday"]
+
+#日付のデータを処理し易いように日付の形に変換しておく
+# Visualizing sales for each month over time
+# Convert 'Date' column to datetime format
+train_merged_df['Date'] = pd.to_datetime(train_merged_df['Date'])
+train_merged_df["Date"]
+train_merged_df.info()
+# Extracting year and month from the 'Date' column
+train_merged_df['Year'] = train_merged_df['Date'].dt.year
+train_merged_df['Month'] = train_merged_df['Date'].dt.month
+train_merged_df['Day'] = train_merged_df['Date'].dt.day
+train_merged_df
+# Grouping by year and month, and summing up the sales for each group
+monthly_sales = train_merged_df.groupby(['Year', 'Month'])['Sales'].sum().reset_index()
+
+test_merged_df['Date'] = pd.to_datetime(test_merged_df.Date)
+test_merged_df['Year'] = test_merged_df.Date.dt.year
+test_merged_df['Month'] = test_merged_df.Date.dt.month
+test_merged_df['Day'] = test_merged_df.Date.dt.day
+print(f"Estimate Sales from {test_merged_df.Date.dt.date.min()} to {test_merged_df.Date.dt.date.max()}")
+test_merged_df
