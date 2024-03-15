@@ -1,5 +1,6 @@
 ※データの意味が分かり辛いコンペが多く感じたので
 データの項目の説明があった為兎に角解いてみる
+#パブリックでのスコアは0.12638
 
 #データを読み込む際、「low_memory = False」は容量が大きいファイルを読み込む際、メモリーを効率的に使うためのオプション
 df = pd.read_csv('/kaggle/input/rossmann-store-sales/train.csv', low_memory=False)
@@ -82,3 +83,35 @@ test_merged_df['Month'] = test_merged_df.Date.dt.month
 test_merged_df['Day'] = test_merged_df.Date.dt.day
 print(f"Estimate Sales from {test_merged_df.Date.dt.date.min()} to {test_merged_df.Date.dt.date.max()}")
 test_merged_df
+
+# 特徴量の選択し、featuresに格納する
+features = ['Store', 'DayOfWeek', 'Promo', 'StateHoliday', 'StoreType', 'Assortment', 'Promo2', 'Day', 'Month', 'Year']
+# 機械学習では、trainデータを用いて精度を確認し、提出時にtestデータを用いる。
+X = train_merged_df[features]
+y = train_merged_df['Sales']
+test_merged_csv = test_merged_df[features]
+# Encoding
+train_inputs = pd.get_dummies(X)
+#val_inputs = pd.get_dummies(X_test)
+test_inputs = pd.get_dummies(test_merged_csv)
+train_inputs.info()
+test_inputs.info()
+
+#ランダムフォレストで学習
+from sklearn.ensemble import RandomForestClassifier
+random_forest = RandomForestRegressor(random_state=42, 
+                                            n_jobs=-1)
+random_forest.fit(train_inputs, y)
+y_pred = random_forest.predict(test_inputs)
+
+# 予測結果をテストデータの新しい列 'Survived' として追加
+test_merged_df['Sales'] = y_pred
+
+# 提出用のデータフレームを作成し、'PassengerId' と 'Survived' 列を選択
+submission_df = test_merged_df[['Id', 'Sales']]
+
+# 提出用データフレームを表示
+display(submission_df)
+
+# 提出用の CSV ファイルとして保存（インデックス列を含まないように index=False を指定）
+submission_df.to_csv('submission.csv', index=False)
