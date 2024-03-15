@@ -1,3 +1,8 @@
+#使用例
+logit_model = LinearRegression()
+try_model(logit_model)
+
+
 """
 As the prediction will be evaluated on RMSPE metric, Create a user-defined
 rmspe function. 
