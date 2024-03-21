@@ -23,3 +23,53 @@ from xgboost import XGBRegressor
 train = pd.read_csv('/kaggle/input/bike-sharing-demand/train.csv')
 test = pd.read_csv('/kaggle/input/bike-sharing-demand/test.csv')
 sample = pd.read_csv('/kaggle/input/bike-sharing-demand/sampleSubmission.csv')
+
+#countに関連深い項目をざっくり見る為にヒートマップを作製
+hmap = train.corr('pearson', numeric_only=True)
+sns.heatmap(hmap)
+
+#temp、atemp天候が一番影響が高い事。登録者、未登録者はテストでは使わないデータの為削除
+train_df = train.loc[:,['datetime','season', "holiday", "workingday", "weather", "temp", "atemp", "humidity", "windspeed", "count"]]
+
+#各項目の値の出現回数を図示
+# Columns for which histograms need to be plotted
+numeric_cols = ['season', 'weather', 'humidity', 'holiday', 'workingday', 'temp', 'atemp', 'windspeed']
+
+# Define the figure size
+plt.figure(figsize=(20, 15))
+
+# Loop through the numeric columns and plot histograms
+for i, col in enumerate(numeric_cols, start=1):
+    plt.subplot(4, 2, i)
+    train_df[col].plot.hist(bins=10, color='C'+str(i), label=f'Histogram of {col.capitalize()}', edgecolor='black')
+    plt.legend(loc='best')
+
+# Adjust the layout
+plt.tight_layout()
+
+#四季の違いでの利用者数の違いがあるかをチェック。春以外は近い利用者数
+#train_df.loc[:,['season', 'count']].groupby('season').sum()の「.」はすべてのデータを使用する意味。
+# Calculate count_season using groupby and join
+by_season = train_df.loc[:,['season', 'count']].groupby('season').sum()
+by_season['count'] = by_season['count'].astype(int)  # Convert the sum to integer
+train_df = train_df.merge(by_season, how='left', on='season', suffixes=('', '_season'))
+
+# Plot the count_season
+by_season.plot(kind='barh')
+plt.grid(True)
+plt.show()
+
+#１時間毎の利用者数を抽出して図示(その日が週末でも休日でもないかどうかもworkingdayで判断)
+by_hour = train_df.groupby(['hour', 'workingday'])['count'].agg('sum').unstack()
+by_hour.head(10)
+by_hour.plot(kind='bar', figsize=(15, 5), width=0.8, grid=True)
+plt.tight_layout()
+plt.show()
+#より多くの情報を得られる(四分位や中央値など)箱ひげ図の読み取りのトレーニングの兼ねて箱ひげ図で表示
+#平日や仕事をされてる方が多い日は全体的に利用者は少なく、7から9時、17 ～ 19 時は利用者数が多く、
+#0 ～ 6 時および 20 ～ 24 時は利用者数が少ない事が分かる
+plt.figure(figsize=(18, 5))
+sns.boxplot(x=train_df['hour'], y=train_df['count'])
+plt.ylabel('Count of Users')
+plt.title("Boxplot of Count grouped by hour");
+
