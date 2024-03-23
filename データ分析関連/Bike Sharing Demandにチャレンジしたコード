@@ -1,4 +1,4 @@
-#自転車のシェアサービスの利用者数の変化を予測する
+#自転車のシェアサービスの利用者数の変化を予測する(スコア役0.42がベスト)
 #利用者数には平日、週末や休日
 #天候などが影響が大きいと予想
 
@@ -73,3 +73,60 @@ sns.boxplot(x=train_df['hour'], y=train_df['count'])
 plt.ylabel('Count of Users')
 plt.title("Boxplot of Count grouped by hour");
 
+#大まかに思いつくシチュエーションを確認したので年月日を分析できる形に変更する。曜日の判断も出来る様に追加
+train['datetime'] = pd.to_datetime(train['datetime'])
+train['year'] = train['datetime'].dt.year
+train['month'] = train['datetime'].dt.month
+#train['day'] =  train['datetime'].dt.day
+train['hour'] = train['datetime'].dt.hour
+train['dow'] = train['datetime'].dt.dayofweek
+
+train.drop(columns=['casual', 'registered', 'datetime'], inplace=True)
+#train.drop(columns=['casual', 'registered'], inplace=True)
+test['datetime'] = pd.to_datetime(test['datetime'])
+test['year'] = test['datetime'].dt.year
+test['month'] = test['datetime'].dt.month
+#test['day'] =  test['datetime'].dt.day
+test['hour'] = test['datetime'].dt.hour
+test['dow'] = test['datetime'].dt.dayofweek
+
+test.drop(columns=['datetime'], inplace=True)
+
+#トレーニングデータをトレーニングと検証用に分ける
+X = train.drop(columns = ['count'], axis=1)
+y = train['count']
+X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2)
+
+#スコアを確認する為の関数を作成
+def rmsle(y_true, y_pred, convertExp=True):
+    if convertExp:
+        y_true = np.exp(y_true)
+        y_pred = np.exp(y_pred)
+     
+    log_true = np.nan_to_num(np.log(y_true+1))
+    log_pred = np.nan_to_num(np.log(y_pred+1))
+    
+    output = np.sqrt(np.mean((log_true - log_pred)**2))
+    return output
+
+♯ランダムフォレストを使用
+model = RandomForestRegressor()
+
+params = {'n_estimators': [100, 150, 200], 
+              'max_depth': [3, 4, 5], 
+              'learning_rate': [0.05, 0.1, 0.15]}
+
+rmsle_scorer = metrics.make_scorer(rmsle, greater_is_better=False)
+
+log_y = np.log(y_train)
+model.fit(X_train, log_y)
+#print(gridsearch_model.best_params_)
+
+log_y_2 = np.log(y_valid)
+predictions = model.predict(X_valid)
+print(f'RMSLE: {rmsle(log_y_2, predictions, True):.5f}')
+
+♯学習後テストデータで予測してcsvに指定の形式で作成
+test_predictions = model.predict(test)
+sample['count'] = np.exp(test_predictions)
+sample.to_csv('submission.csv', index=False)
