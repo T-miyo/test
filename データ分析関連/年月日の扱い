@@ -1,0 +1,8 @@
+年月日、日時を特徴量などとして扱う際は年、月、日、時間をそれぞれに分けて扱う
+※例
+train['datetime'] = pd.to_datetime(train['datetime'])
+train['year'] = train['datetime'].dt.year
+train['month'] = train['datetime'].dt.month
+train['day'] = train['datetime'].dt.day
+train['hour'] = train['datetime'].dt.hour
+train['dow'] = train['datetime'].dt.dayofweek
