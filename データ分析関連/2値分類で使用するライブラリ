@@ -1,0 +1,30 @@
+# 数値計算やデータフレーム操作に関するライブラリをインポートする
+import numpy as np
+import pandas as pd
+import scipy as sp
+from scipy import stats
+
+# URL によるリソースへのアクセスを提供するライブラリをインポートする。
+# import urllib # Python 2 の場合
+import urllib.request # Python 3 の場合
+
+# 図やグラフを図示するためのライブラリをインポートする。
+%matplotlib inline
+import matplotlib.pyplot as plt
+from pandas.tools import plotting
+
+# 機械学習関連のライブラリ群
+
+from sklearn.cross_validation import train_test_split # 訓練データとテストデータに分割
+from sklearn.metrics import confusion_matrix # 混合行列
+
+from sklearn.decomposition import PCA #主成分分析
+from sklearn.linear_model import LogisticRegression # ロジスティック回帰
+from sklearn.neighbors import KNeighborsClassifier # K近傍法
+from sklearn.svm import SVC # サポートベクターマシン
+from sklearn.tree import DecisionTreeClassifier # 決定木
+from sklearn.ensemble import RandomForestClassifier # ランダムフォレスト
+from sklearn.ensemble import AdaBoostClassifier # AdaBoost
+from sklearn.naive_bayes import GaussianNB # ナイーブ・ベイズ
+from sklearn.lda import LDA # 線形判別分析
+from sklearn.qda import QDA # 二次判別分析
