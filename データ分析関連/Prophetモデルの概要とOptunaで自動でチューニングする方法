@@ -1,0 +1,13 @@
+Prophet モデルは、過去のデータを分析し将来の時系列データを予測することができます。ビジネスにおいては、
+需要予測や在庫管理に使用されるため、生産や販売の計画立案に役立ちます
+
+Prophet モデルとは
+Prophet は Meta 社（旧 Facebook 社）が開発した、一般化加法モデル（Generalized Additive Model）です。
+Stan（Python の場合は PyStan）で動きます。そのため、Python で動かすためには、
+Prophet とともに、PyStan もインストールしておく必要があります
+
+パラメータのチューニングなど
+実装に関しては
+https://book.st-hakky.com/data-science/prophet-model-predicts/
+に記載されてる
+現状はpythonで出来る分析でケーススタディしていきたいので未実施
