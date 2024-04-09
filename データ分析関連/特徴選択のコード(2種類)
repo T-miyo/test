@@ -1,0 +1,69 @@
+#
+# モジュールの読み込み
+#
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+from sklearn.feature_selection import RFE
+from sklearn.feature_selection import RFECV
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import Lasso
+from sklearn.linear_model import LassoCV
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import fetch_california_housing
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+#
+# ヒストグラム
+#
+df.hist(bins=30)
+plt.tight_layout()
+
+#
+# 相関関係+ヒートマップ
+#
+# 相関係数
+cor = df.corr()
+# ヒートマップ
+sns.heatmap(cor, annot=True)
+plt.show()
+
+#
+# データセットを学習用とテスト用に分割
+#
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    train_size=0.7,
+    test_size=0.3,
+    random_state=123
+)
+
+#
+# モデル構築（重回帰）と精度検証（R2）
+#
+# インスタンス
+model = LinearRegression()
+# 学習（学習データ利用）
+model.fit(X_train, y_train)
+# 精度検証（決定係数R2）
+print('決定係数R2（学習データ）:', 
+      model.score(X_train, y_train))
+print('決定係数R2（テストデータ）:', 
+      model.score(X_test, y_test))
+
+#
+# モデル構築（ランダムフォレスト）と精度検証（R2）
+#
+# インスタンス
+model_rf = RandomForestRegressor()
+# 学習（学習データ利用）
+model_rf.fit(X_train, y_train)
+# 精度検証（決定係数R2）
+print('決定係数R2（学習データ）:', 
+      model_rf.score(X_train, y_train))
+print('決定係数R2（テストデータ）:', 
+      model_rf.score(X_test, y_test))
