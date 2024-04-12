@@ -1,0 +1,9 @@
+複値分類の問題を解いていた際
+ダミー変数を扱う機会があった為メモ
+
+pd.get_dummies(df['sex'])
+基本的な記述方法
+pd.get_dummies(df, columns=['sex', 'rank'])
+上記の様にカラムを指定して書き換えも出来る
+pd.get_dummies(df, dtype=int)
+上記はダミー変数にする際、数値に指定できる。デフォルトはboolenになる
