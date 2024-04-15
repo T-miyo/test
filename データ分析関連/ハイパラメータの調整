@@ -1,0 +1,26 @@
+#パラメータの選定はモデルの制度に直結する
+
+# グリットサーチ
+from sklearn.model_selection import GridSearchCV
+
+# 試すパラメーターの設定
+search_gs = {
+"max_depth": [None, 5, 10],
+"n_estimators":[50, 100],
+"min_samples_split": [4, 10],
+"min_samples_leaf": [3, 10],
+}
+model_gs = RandomForestClassifier()
+gs = GridSearchCV(model_gs, search_gs, cv = 3, iid = False)
+
+gs.fit(X_train, y_train)
+print(gs.best_params_)
+
+# 最適なパラメーターを設定
+clf_rand = RandomForestClassifier(max_depth = None,　min_samples_leaf = 3, min_samples_split = 4,　n_estimators =50)
+model_rand = clf_rand.fit(X_train, y_train)
+pred_rand = model_rand.predict(X_test)
+
+# モデルの評価
+from sklearn import metrics
+print(metrics.classification_report(y_test, pred_rand))
