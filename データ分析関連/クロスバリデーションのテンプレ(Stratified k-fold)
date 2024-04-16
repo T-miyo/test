@@ -1,0 +1,64 @@
+Stratified k-fold(層化k分割交差検証)
+各foldに含まれるクラスの割合を等しくするk分割交差検証です。
+
+分類問題で使用され、テストデータと学習データのクラスの割合が等しいと仮定される時に使用される手法です。
+多クラス分類問題で、ランダムに分割すると
+各foldのクラスの割合が偏ってしまうような場合(例えば頻度の少ないクラスがある場合)に重要となってきます。
+scikit-learnのStratifiedKFoldを利用
+ニューラルネットワークモデルはbuild_modelという関数を用意する
+学習時のコールバックはReduceLROnPlateau・ModelCheckpoint・EarlyStopping
+評価関数はlog loss
+
+from sklearn.metrics import log_loss
+from sklearn.model_selection import StratifiedKFold
+from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
+
+FOLD = 5
+EPOCH = 10
+BATCH_SIZE = 32
+
+valid_scores = []
+models = []
+kf = StratifiedKFold(n_splits=FOLD, shuffle=True, random_state=42)
+
+for fold, (train_indices, valid_indices) in enumerate(kf.split(X, y)):
+    X_train, X_valid = X[train_indices], X[valid_indices]
+    y_train, y_valid = y[train_indices], y[valid_indices]
+
+    model = build_model(X_train.shape[1])
+    rlr = ReduceLROnPlateau(monitor='val_loss',
+                            factor=0.1,
+                            patience=3,
+                            verbose=0,
+                            min_delta=1e-4,
+                            mode='max')
+    ckp = ModelCheckpoint(f'model_{fold}.hdf5',
+                          monitor='val_loss',
+                          verbose=0,
+                          save_best_only=True,
+                          save_weights_only=True,
+                          mode='max')
+    es = EarlyStopping(monitor='val_loss',
+                       min_delta=1e-4,
+                       patience=7,
+                       mode='max',
+                       baseline=None,
+                       restore_best_weights=True,
+                       verbose=0)
+
+    model.fit(X_train, y_train,
+              validation_data=(X_valid, y_valid),
+              epochs=EPOCH,
+              batch_size=BATCH_SIZE,
+              callbacks=[rlr, ckp, es],
+              verbose=0)
+
+    y_valid_pred = model.predict(X_valid)
+    score = log_loss(y_valid, y_valid_pred)
+    print(f'fold {fold} log loss: {score}')
+    valid_scores.append(score)
+
+    models.append(model)
+
+cv_score = np.mean(valid_scores)
+print(f'CV score: {cv_score}')
