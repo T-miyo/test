@@ -1,0 +1,67 @@
+Group k-fold(グループk分割交差検証)
+同じグループ(顧客や被験者など特定の人物を表すものなど)が同じfoldになるようにデータを分割するk分割交差検証です。
+
+テストデータで学習データのグループが現れないような場合に利用します。
+つまり、未知のグループを予測するような問題であるため、同じグループが異なるfoldに存在してしまうと、
+検証データにそのグループが含まれている時に予測しやすくなってしまい、適切な検証ができなくなってしまいます。
+
+scikit-learnのGroupKFoldを利用
+GroupKFoldはシャッフルと乱数の指定ができない
+ニューラルネットワークモデルはbuild_modelという関数を用意する
+学習時のコールバックはReduceLROnPlateau・ModelCheckpoint・EarlyStopping
+評価関数はMAE
+
+from sklearn.metrics import mean_absolute_error
+from sklearn.model_selection import GroupKFold
+from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
+
+FOLD = 5
+EPOCH = 10
+BATCH_SIZE = 32
+
+group = train['id']
+valid_scores = []
+models = []
+kf = GroupKFold(n_splits=FOLD)
+
+for fold, (train_indices, valid_indices) in enumerate(kf.split(X, y, group)):
+    X_train, X_valid = X[train_indices], X[valid_indices]
+    y_train, y_valid = y[train_indices], y[valid_indices]
+
+    model = build_model(X_train.shape[1])
+    rlr = ReduceLROnPlateau(monitor='val_loss',
+                            factor=0.1,
+                            patience=3,
+                            verbose=0,
+                            min_delta=1e-4,
+                            mode='max')
+    ckp = ModelCheckpoint(f'model_{fold}.hdf5',
+                          monitor='val_loss',
+                          verbose=0,
+                          save_best_only=True,
+                          save_weights_only=True,
+                          mode='max')
+    es = EarlyStopping(monitor='val_loss',
+                       min_delta=1e-4,
+                       patience=7,
+                       mode='max',
+                       baseline=None,
+                       restore_best_weights=True,
+                       verbose=0)
+
+    model.fit(X_train, y_train,
+              validation_data=(X_valid, y_valid),
+              epochs=EPOCH,
+              batch_size=BATCH_SIZE,
+              callbacks=[rlr, ckp, es],
+              verbose=0)
+
+    y_valid_pred = model.predict(X_valid)
+    score = mean_absolute_error(y_valid, y_valid_pred)
+    print(f'fold {fold} MAE: {score}')
+    valid_scores.append(score)
+
+    models.append(model)
+
+cv_score = np.mean(valid_scores)
+print(f'CV score: {cv_score}')
