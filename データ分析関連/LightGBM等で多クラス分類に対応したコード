@@ -1,5 +1,6 @@
 #アンサンブルやパラメータの決定などにグリッドリサーチも採用すればスコアアップも狙える？
 #日本語の適度な参考資料が見つからなかった為、多クラス分類への対応のみを実施
+#https://pythonbunseki.com/python-lightgbm-multiclass/を参照
 
 # LightGBM パラメータ
 params = {
