@@ -1,0 +1,53 @@
+#アンサンブルやパラメータの決定などにグリッドリサーチも採用すればスコアアップも狙える？
+#日本語の適度な参考資料が見つからなかった為、多クラス分類への対応のみを実施
+
+# LightGBM パラメータ
+params = {
+  'objective':'multiclass', # 目的 : 多クラス分類
+  'metric':{'multi_error'}, # 評価指標 : 不正解率(= 1-正解率)
+  'num_class':11             # クラス数 : 11
+}
+
+x = train_dl.drop(["index", "genre"], axis=1) # y以外の特徴量
+y = train_dl["genre"]
+
+# 訓練データとテストデータを分割
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+
+#ランダムフォレストを使用する場合
+from sklearn.ensemble import RandomForestClassifier
+model = RandomForestClassifier(max_depth = None,min_samples_leaf = 3,min_samples_split = 11,n_estimators =50)
+model.fit(x_train, y_train)
+
+#XGBoostで学習するためのデータ形式に変換
+dtrain = xgb.DMatrix(x_train, y_train)
+dvalid = xgb.DMatrix(x_test, y_test)
+import xgboost as xgb
+#モデルパラメータの設定
+param = {'objective': 'multi:softmax', 'num_class': 11}
+num_round = 100
+bst = xgb.train(param, dtrain, num_round)
+#予測の実行と書き出し
+dtest = xgb.DMatrix(x_test)
+pred = bst.predict(dtest)
+print(pred)
+
+#LightGBMで学習するためのデータ形式に変換
+dtrain = lgb.Dataset(x_train, y_train)
+dvalid = lgb.Dataset(x_test, y_test)
+
+#トレーニングの際に多クラス分類に対応するパラメータを使用
+model = lgb.train(params,dtrain)
+
+#予測の実行と書き出し
+pred_prob = model.predict(x_test)
+pred = np.argmax(pred_prob,axis = 1)
+
+#モデル評価
+acc = accuracy_score(y_test,pred)
+print('Acc :', acc)
+
+#Signateの提出形式に対応した形でのCSVファイルを作成
+sample[1] = pred
+#sample = sample.drop("0.1", axis=1)
+sample.to_csv('submit.csv', header=None)
