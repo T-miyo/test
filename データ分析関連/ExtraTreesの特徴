@@ -1,0 +1,25 @@
+勉強不足で存在を知らなかった為エクストラツリーについてのメモ
+
+ランダムフォレスト
+ランダムフォレストモデルは、複数ツリー(n_estimators)を作成し、過学習を減らす事が出来ます。
+
+Extra Trees
+Extra Treesはランダムフォレストに似ています。複数のツリーを構築する所は、一緒ですが、
+木のノード（葉）を分割する所の特徴量(ジニ係数、エントロピー)のどちらかをランダムに選びます。
+
+ExtraTreesのパラメーター
+
+n_estimator：フォレスト内のツリーの数（10～100）「int」
+criterion：サポートされる基準は、Gini不純物の「gini」および情報ゲインの「entropy」です。
+max_depth：ツリーの最大の深さ「int」
+min_samples_split：内部ノードを分割するために必要なサンプルの最小数「int」
+min_samples_leaf：リーフノードにあるために必要なサンプルの最小数「int」
+min_weight_fraction_leaf：リーフノードに存在する必要がある（すべての入力サンプルの）重みの合計の最小重み付き割合　「int」
+max_features：最適な分割をする特徴量数「int」「float」「auto」「sqrt」「log2」
+max_leaf_nodes：リーフノードの最大値　「int」
+min_impurity_decrease：この分割がこの値以上の不純物の減少を引き起こす場合、ノードは分割されます。
+min_impurity_split：木の成長の早期停止のしきい値
+oob_score：一般化の精度を推定するためにアウトオブバッグサンプル
+n_jobs：並行して実行するジョブの数
+random_state：乱数を制御するパラメータ
+bootstrapping：ツリーの構築時に使用されるサンプルのブートストラップの設定
