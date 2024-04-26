@@ -1,0 +1,46 @@
+ガラスの屈折率と組成からガラス種を判定する分類問題
+結論：ExtraTreesClassifierでパラメータを少し設定して0.7程度のスコアがベストで終了
+
+/
+ガラスの屈折率と組成からガラス種を判定する分類問題
+
+一般論として種類は成分組成によって決まるはずなので、特徴量エンジニアリングでガラスの化学的特性を出せるかが重要
+
+製法の違いを出すには屈折率しかデータがない
+
+（MIらしく）データ数が107個と少ない
+
+学習・検証データセットの分け方も重要
+
+分類問題でclass:4の情報がない->もしテスト側にclass4となるデータが入っている場合、決定木だとかなり厳しい
+
+（後述の通り、）107データの内7割以上がclass1と2のデータであり、不均衡データセットである。よって分割方法や不均衡解消（アンダーサンプリングなど）を検討する必要があるかもしれない。
+
+複雑なモデルだと過学習の恐れがあるため、シンプルなモデルの結果をベンチマークとしながら比較する方がよさそう
+
+数値がwt%なのかat&なのか実験時の合成重量なのか不明。
+/
+from sklearn import model_selection
+
+kfold = model_selection.KFold(n_splits = 5) 
+scores = {}
+
+seed = 0
+
+ext_clf = ExtraTreesClassifier(bootstrap=False, ccp_alpha=0.0, class_weight=None,
+                     criterion='gini', max_depth=None, max_features='auto',
+                     max_leaf_nodes=None, max_samples=None,
+                     min_impurity_decrease=0.0,
+                     min_samples_leaf=1, min_samples_split=2,
+                     min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=-1,
+                     oob_score=False, random_state=123, verbose=0,
+                     warm_start=False)
+ext_clf.fit(X_train, y_train)
+results = model_selection.cross_val_score(ext_clf, X_test, y_test, cv = kfold)
+#end_time = datetime.now()
+#scores[('3.extra_tree', 'duration')] = end_time - start_time 
+scores[('3.extra_tree', 'train_score')] = results.mean()
+scores[('3.extra_tree', 'test_score')] = ext_clf.score(X_test, y_test)
+scores
+
+# Extra Tree + bootstrap
