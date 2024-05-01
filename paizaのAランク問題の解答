@@ -1,0 +1,174 @@
+https://paiza.jp/challenges/695/show
+A078:十字パズル
+問題の詳細はURL先
+
+import numpy as np
+import copy
+
+
+def check():
+    del_ind = []
+    
+    for i in range(H):
+        
+        for j in range(5):
+            if (0 < i < H-1):
+                if 0 < j < 4:
+                    if S[i][j] != ".":
+                        c = S[i][j]
+                        if (S[i-1][j] == c) and (S[i+1][j] == c) and (S[i][j-1] == c) and (S[i][j+1] == c):
+                            jd_s[i-1][j] = True
+                            jd_s[i+1][j] = True
+                            jd_s[i][j-1] = True
+                            jd_s[i][j+1] = True
+                            jd_s[i][j] = True
+                            print(i, j)
+                            del_ind.append([i, j])
+                            del_ind.append([i-1, j])
+                            del_ind.append([i+1, j])
+                            del_ind.append([i, j-1])
+                            del_ind.append([i, j+1])
+                if j == 0:
+                    if S[i][j] != ".":
+                        c = S[i][j]
+                        if (S[i-1][j] == c) and (S[i+1][j] == c) and (S[i][j+1] == c):
+                            jd_s[i-1][j] = True
+                            jd_s[i+1][j] = True
+                            jd_s[i][j+1] = True
+                            jd_s[i][j] = True
+                            print(i, j)
+                            del_ind.append([i, j])
+                            del_ind.append([i-1, j])
+                            del_ind.append([i+1, j])
+                            del_ind.append([i, j+1])
+                if j == 4:
+                    if S[i][j] != ".":
+                        c = S[i][j]
+                        if (S[i-1][j] == c) and (S[i+1][j] == c) and (S[i][j+1] == c):
+                            jd_s[i-1][j] = True
+                            jd_s[i+1][j] = True
+                            jd_s[i][j-1] = True
+                            jd_s[i][j] = True
+                            print(i, j)
+                            del_ind.append([i, j])
+                            del_ind.append([i-1, j])
+                            del_ind.append([i+1, j])
+                            del_ind.append([i, j-1])
+
+            elif (i == 0):
+                if j == 0:
+                    if S[i][j] != ".":
+                        c = S[i][j]
+                        if (S[i+1][j] == c) and (S[i][j+1] == c):
+                            jd_s[i+1][j] = True
+                            jd_s[i][j+1] = True
+                            jd_s[i][j] = True
+                            print(i, j)
+                            del_ind.append([i, j])
+                            del_ind.append([i+1, j])
+                            del_ind.append([i, j+1])
+
+                elif j == 4:
+                    if S[i][j] != ".":
+                        c = S[i][j]
+                        if (S[i+1][j] == c) and (S[i][j-1] == c):
+                            jd_s[i+1][j] = True
+                            jd_s[i][j-1] = True
+                            jd_s[i][j] = True
+                            print(i, j)
+                            del_ind.append([i, j])
+                            del_ind.append([i-1, j])
+                            del_ind.append([i+1, j])
+                            del_ind.append([i, j-1])
+                            
+                elif 0 < j < 4:
+                    if S[i][j] != ".":
+                        c = S[i][j]
+                        if (S[i+1][j] == c) and (S[i][j-1] == c) and (S[i][j+1] == c):
+                            jd_s[i+1][j] = True
+                            jd_s[i][j-1] = True
+                            jd_s[i][j] = True
+                            jd_s[i][j+1] = True
+                            print(i, j)
+                            del_ind.append([i, j])
+                            del_ind.append([i+1, j])
+                            del_ind.append([i, j-1])
+                            del_ind.append([i, j+1])
+            elif (i == H-1):
+                if j == 0:
+                    if S[i][j] != ".":
+                        c = S[i][j]
+                        if (S[i-1][j] == c) and (S[i][j+1] == c):
+                            jd_s[i-1][j] = True
+                            jd_s[i][j+1] = True
+                            jd_s[i][j] = True
+                            print(i, j)
+                            del_ind.append([i, j])
+                            del_ind.append([i-1, j])
+                            del_ind.append([i, j+1])
+                elif j == 4:
+                    if S[i][j] != ".":
+                        c = S[i][j]
+                        if (S[i-1][j] == c) and (S[i][j-1] == c):
+                            jd_s[i-1][j] = True
+                            jd_s[i][j-1] = True
+                            jd_s[i][j] = True
+                            print(i, j)
+                            del_ind.append([i, j])
+                            del_ind.append([i-1, j])
+                            del_ind.append([i, j-1])
+                elif 0 < j < 4:
+                    if S[i][j] != ".":
+                        c = S[i][j]
+                        if (S[i-1][j] == c) and (S[i][j-1] == c) and (S[i][j+1] == c):
+                            jd_s[i-1][j] = True
+                            jd_s[i][j-1] = True
+                            jd_s[i][j] = True
+                            jd_s[i][j+1] = True
+                            print(i, j)
+                            del_ind.append([i, j])
+                            del_ind.append([i-1, j])
+                            del_ind.append([i, j-1])
+                            del_ind.append([i, j+1])
+    
+    dlen = len(del_ind)
+    for i in range(dlen):
+        dt, dy = del_ind[i]
+        S[dt][dy] = "."
+        
+    for i in range(5):
+        t = -1
+        for j in reversed(range(H)):
+            print(i, j, S[j][i])
+            if t < 0 and j > 0 and S[j][i] == ".":
+                t = j
+            elif (j >= 0) and (S[j][i] != ".") and t > j:
+                S[t][i] = S[j][i]
+                S[j][i] = "."
+                t -= 1
+                print(200, t)
+    if dlen > 0:
+        return 0             
+    else:
+        return 1
+                
+                
+H = int(input())
+
+S = [list(input()) for _ in range(H)]
+jd_s = [[False]*5 for _ in range(H)]
+
+print(S)
+
+print(jd_s)
+
+fin = 0
+
+while fin == 0:
+    
+    fin = check()
+    
+print(jd_s)
+
+for i in range(H):
+    print(*S[i], sep = "")
