@@ -1,0 +1,32 @@
+https://paiza.jp/career/challenges/718/retry?tk=3228be227e2f72b8b00fbedec4a2675c
+Aランクの問題からタイムオーバーになるケースが少なくないので
+最終的に処理速度もクリアしたコードをメモ
+本来は計算量なども考慮して書ければ良いが現状は難しい為
+データの形をリストではなく辞書に変更
+※辞書に変えただけでかなり速度が上がる事が分かった為
+辞書に変えてもタイムオーバーになるので
+検索前にソートして処理の効率化を試した所速度もクリア出来た
+※データの順序も重要なので、キーに本来の順序を持たせて、バリューに本来の値を格納
+バリューでソートして処理を実施
+
+N = int(input())
+
+A = {i:int(input()) for i in range(N*2)}
+#r_A = dict(reversed(list(A.items())))
+#print(A, type(A))
+A_sorted = dict(sorted(A.items(), key=lambda x:x[1]))
+#print(A_sorted, type(A_sorted))
+#ans = check_list()
+
+#print(ans)
+ans = 0
+for i, v in enumerate(A_sorted):
+#    print(i, v)
+#    jd = A[i]
+    if (i % 2) == 0:
+        mk = v
+    else:
+        if abs(mk - v) > 1:
+            ans += abs(mk - v) - 1
+#            print(88, ans, i, v)
+print(ans)
