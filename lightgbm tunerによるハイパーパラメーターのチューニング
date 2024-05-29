@@ -1,6 +1,9 @@
 LightGBM Tuner は LightGBM に特化したハイパーパラメータ自動最適化のためのモジュール「Optuna」を使用した際に
 スムーズにいかなかった為メモ
 ※参照元：https://qiita.com/askl4267/items/28b476f76b01699430fe
+kaggleなどブラウザでコーディングする場合のpipは「!pip install optuna optuna-integration」
+ローカル環境のVscodeで上記のコマンドを実施した際エラーになった為「pip install optuna optuna-integration--user」
+で実施してエラーを回避。警告が出るがコードには影響ないので今回はこれで良しとする
 
 Optuna を使って LightGBM のハイパーパラメータをチューニングするとき、ナイーブに実装すると次のようになります。
 
