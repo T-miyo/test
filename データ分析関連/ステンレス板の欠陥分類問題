@@ -12,5 +12,11 @@ train_df['Pixels_Areas_qcut'] = pd.qcut(train_df['Pixels_Areas'], 4)
 train_df['Log_Y_Index_qcut'] = pd.qcut(train_df['Log_Y_Index'], 4)」
 
 「#One-Hot Encoding
-train_df = pd.get_dummies(train_df, columns=['Log_Y_Index_qcut','Pixels_Areas_qcut'], dtype=int)
-」
+train_df = pd.get_dummies(train_df, columns=['Log_Y_Index_qcut','Pixels_Areas_qcut'], dtype=int)」
+
+「train_df = train_df.rename(columns={"Pixels_Areas_qcut_(5.999, 85.0]" : "Pixels_Areas_qcut_1", 
+"Pixels_Areas_qcut_(85.0, 172.0]" : "Pixels_Areas_qcut_2", "Pixels_Areas_qcut_(172.0, 830.0]" : "Pixels_Areas_qcut_3", 
+"Pixels_Areas_qcut_(830.0, 152655.0]" : "Pixels_Areas_qcut_4", "Log_Y_Index_qcut_(0.3, 1.079]" : "Log_Y_Index_qcut_1", 
+"Log_Y_Index_qcut_(1.079, 1.322]" : "Log_Y_Index_qcut_2", 
+"Log_Y_Index_qcut_(1.322, 1.74]" : "Log_Y_Index_qcut_3", "Log_Y_Index_qcut_(1.74, 4.259]" : "Log_Y_Index_qcut_4"})」
+※カラムはトレーニングとテストで区切りの値が違う可能性があるので同じカラム名にして処理出来る様にする
