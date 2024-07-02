@@ -1,0 +1,16 @@
+特徴量の選択がかなり大きく影響する為一番重視してみた
+「#7つの特徴量を削除
+drop_col=["X_Maximum","Y_Maximum","X_Perimeter","Sum_of_Luminosity","TypeOfSteel_A300","Y_Perimeter","LogOfAreas"]
+train_df=train_df.drop(drop_col,axis=1)」
+
+最終的に「Log_Y_Index」は除外して0.77から0.78に正答率が上がった
+※外れ値がある為、外れ値の影響を下げる為カテゴリカル変数に変換
+その後、ワンホットエンコーディングしてlightgblで処理出来る様に変換
+
+「#カテゴリカル変数に変換
+train_df['Pixels_Areas_qcut'] = pd.qcut(train_df['Pixels_Areas'], 4)
+train_df['Log_Y_Index_qcut'] = pd.qcut(train_df['Log_Y_Index'], 4)」
+
+「#One-Hot Encoding
+train_df = pd.get_dummies(train_df, columns=['Log_Y_Index_qcut','Pixels_Areas_qcut'], dtype=int)
+」
