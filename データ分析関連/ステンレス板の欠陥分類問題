@@ -20,3 +20,17 @@ train_df = pd.get_dummies(train_df, columns=['Log_Y_Index_qcut','Pixels_Areas_qc
 "Log_Y_Index_qcut_(1.079, 1.322]" : "Log_Y_Index_qcut_2", 
 "Log_Y_Index_qcut_(1.322, 1.74]" : "Log_Y_Index_qcut_3", "Log_Y_Index_qcut_(1.74, 4.259]" : "Log_Y_Index_qcut_4"})」
 ※カラムはトレーニングとテストで区切りの値が違う可能性があるので同じカラム名にして処理出来る様にする
+
+※試しにアンサンブル学習のスタッキングを試したら0.01だが改善
+lightgbm、ランダムフォレスト、エクストラツリーで組み合わせた
+# バギングアンサンブル
+estimators=[('rf', model_Ran), ('ex', ext_clf), ('lb', model_LGB)]
+stk_clf=StackingClassifier(estimators=estimators, final_estimator=LogisticRegression())
+stk_clf.fit(X_train, y_train)
+results = model_selection.cross_val_score(stk_clf, X_val, y_val, cv = kfold) 
+scores[('4.Stacking', 'train_score')] = results.mean()
+scores[('4.Stacking', 'test_score')] = stk_clf.score(X_val, y_val)
+※学習したら学習器と同じ様に
+pred = stk_clf.predict(予測に使用するデータ)
+
+scores
