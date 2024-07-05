@@ -2,3 +2,40 @@
 1、特徴量の選定
 欠損値の確認：なし
 外れ値の存在を箱ひげ図などから確認
+特徴量の選定にランダムフォレスト回帰のロジックを使った重要度を図ってみた
+以下コードの一部
+
+# 学習データとテストデータへの分割
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=123)
+
+# ランダムフォレスト回帰のインスタンスの作成
+from sklearn.ensemble import RandomForestRegressor
+rf = RandomForestRegressor(n_estimators = 100,
+                           max_features = 5,
+                           random_state = 123, 
+                           n_jobs = -1)
+# feature importanceの計算
+importances = rf.feature_importances_
+# 計算結果をデータフレームに格納
+df_feature_importance = pd.DataFrame(zip(X_train.columns, importances),columns=["Features","Importance"])
+df_feature_importance                                                     
+これで得た特徴量と参照元で選定された特徴量を比べて選定
+「Log_Y_Index」は上記のコードでは重要度が低い為除外
+「Log_X_Index」に関しては外れ値がある為カテゴリカル変数に変換(4つに分類)し、lightbgmで処理出来る様にダミー変換に変換
+そのままだとテストの際に分割する値の範囲が違う可能性があるのでカラム名をトレーニングと統一する為にカラム名を変更する
+2、モデルの選定はパラメータは設定せずトレーニングのスコアが高いもの3つに絞った
+最終的に、lightbgm,extratree,ニューラルネットワークを採用
+さらにスコアを上げる為にアンサンブル学習のスタッキングを採用
+ニューラルネットワークに関しては、トレーニングのデータを正規分布に近い状態にデータを変換しないと精度が悪いので注意が必要
+※参照元：https://qiita.com/TeddyGlass/items/7fa467b0eaafe9e767de
+「
+from sklearn.preprocessing import QuantileTransformer
+transformer = QuantileTransformer(n_quantiles=100, random_state=0, output_distribution='normal')
+X_train = transformer.fit_transform(X_tr)
+X_valid = transformer.transform(X_va)
+X_test = transformer.transform(X_te)」
+を自身のコードに合わせて使用
+またパラメータも選定し精度が上がった(activation="logistic")今回はこの項目のみ設定。他は下がったり細かな条件があるので
+今回はシンプルに
+分類器のそれぞれのパラメータはグリッドリサーチで設定したが逆に下がったケースがあったのでlightgbmは変更せずに使用
+※現状最高スコア：0.7888774で6位
