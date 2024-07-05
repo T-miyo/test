@@ -34,7 +34,7 @@ transformer = QuantileTransformer(n_quantiles=100, random_state=0, output_distri
 X_train = transformer.fit_transform(X_tr)
 X_valid = transformer.transform(X_va)
 X_test = transformer.transform(X_te)」
-を自身のコードに合わせて使用
+を自身のコードに合わせて使用(ニューラルネットワークのトレーニングのみでこの変換したデータを使用)
 またパラメータも選定し精度が上がった(activation="logistic")今回はこの項目のみ設定。他は下がったり細かな条件があるので
 今回はシンプルに
 分類器のそれぞれのパラメータはグリッドリサーチで設定したが逆に下がったケースがあったのでlightgbmは変更せずに使用
