@@ -1,0 +1,167 @@
+終値前日比の追加
+時系列のふるまいを表す特徴量として、終値の前日比を追加します。
+本クエストは株価の終値の上下を予測するものであるので、終値がどの程度上昇しているのか、
+あるいは下降しているのかを表す特徴量を追加することは、直感的にも納得しやすいのではないでしょうか。
+株価の前日比については、対数の差分をとる方法もありますが、
+今回は、以下に示すように、当日終値と前日終値の差分を、前日終値で割るといった式を採用します。
+
+[終値前日比] = ([当日終値] - [前日終値]) / [前日終値]
+
+なお、pandasでは時系列データに対して、指定の期間分を前後にずらした値を算出することができます。
+これは、shift関数を使用して次のように記述することができます。
+
+データ名.shift(ずらす行数)
+
+よって、たとえば以下のようなデータフレームdfを用意したとき
+
+Date	Close
+2015-01-02	214.815991
+2015-01-05	208.854964
+2015-01-06	203.099909
+2015-01-07	204.213885
+2015-01-08	208.591630
+df.shift(1)というようにshift関数を適用すると、
+
+Date	Close
+2015-01-02	NaN
+2015-01-05	214.815991
+2015-01-06	208.854964
+2015-01-07	203.099909
+2015-01-08	204.213885
+1行下にずらしたデータフレームが取得できました。
+つまり、データフレームのインデックスはそのままに、終値の値として前日のものが入力されたものが得られました。
+したがって、次のように記述することで終値前日比が得られます。
+
+(df['Close'] - df['Close'].shift(1)) / df['Close'].shift(1)
+
+なお、先頭の取引日については、NaNを含んだ演算のために、終値前日比もNaNになってしまっています。
+この値に対する変換方法については幾つか考えられますが、今回は0に変換することにします。
+pandasでは、NaNの値に対する一括変換を行うfillna関数があるため、これを用いてNaNを0に変換します。
+
+NaNを含む変数.fillna(0)
+
+# Mission3のデータ前処理までをまとめて実施
+import pandas as pd
+df = pd.read_csv("train.csv")
+df['Date'] = pd.to_datetime(df['Date'], format="%d/%m/%Y")
+df.sort_values(by='Date', ascending=True, inplace=True)
+df.set_index(keys='Date', inplace=True)
+df.drop(columns=['Adj Close'], inplace=True)
+df['Body'] = df['Open'] - df['Close']
+
+# 終値の先頭5行の確認
+print(df['Close'].head())
+
+# shiftを用いて1日分ずらした終値の先頭5行の確認
+print(df['Close'].shift(1).head())
+
+# 前日比の計算
+df_rate = (df["Close"] - df["Close"].shift(1)) / df["Close"].shift(1)
+
+# NaNを0に変換
+df_rate = df_rate.fillna(0)
+
+# 終値前日比の先頭5行の確認
+df['Rate'] = df_rate
+print(df['Rate'].head())
+
+モデルの学習の前準備
+新たに特徴量を追加したので、このデータを使ってモデルで学習させるために、
+再びデータの分割や、データ構造の変形・変換が必要となります。
+
+# numpy, train_test_split, StandardScaler のインポート
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# 説明変数と目的変数に分割
+X_data = df.drop(columns=['Up'])
+y_data = df['Up']
+
+# 学習データ、検証データ、評価データに分割
+X_trainval, X_test, y_trainval, y_test = train_test_split(X_data, y_data, test_size=0.20, shuffle=False)
+X_train, X_val, y_train, y_val = train_test_split(X_trainval, y_trainval, test_size=0.25, shuffle=False)
+
+# 標準化を伴いながら num_date日間ごとに株価データを積み重ねる関数
+def get_standardized_t(X, num_date):
+    X = np.array(X)
+    X_t_list = []
+    for i in range(len(X) - num_date + 1):
+        X_t = X[i:i+num_date]
+        scaler = StandardScaler()
+        X_standardized = scaler.fit_transform(X_t)
+        X_t_list.append(X_standardized)
+    return np.array(X_t_list)
+
+# 抽出する期間の指定
+num_date = 5
+
+# 学習データ、検証データ、評価データの説明変数の変形と変換
+X_train_t =  get_standardized_t(X=X_train, num_date=num_date)
+X_val_t = get_standardized_t(X=X_val, num_date=num_date)
+X_test_t = get_standardized_t(X=X_test, num_date=num_date)
+
+train_test_splitの引数やオプションの指定は次の通りです。
+`train_test_split(説明変数, 目的変数, test_size=分割割合の指定, shuffle=データのシャッフル有効化)``
+y_train, y_val, y_testから先頭のnum_date - 1個の要素を除いたものを、y_train_t, y_val_t, y_tes_tに代入します。
+データ = データ[ num_date-1 : ]と書くことで、先頭のnum_date - 1個の要素を取り除く
+
+# 学習データ、検証データ、評価データの目的変数の変形と変換
+y_train_t = y_train[num_date-1 :]
+y_val_t = y_val[num_date-1 :]
+y_test_t = y_test[num_date-1 :]
+
+# ネットワークの各層のサイズの定義
+num_l1 = 100
+num_l2 = 20
+num_output = 1
+
+# 以下、ネットワークを構築
+model = Sequential()
+# 第1層
+model.add(LSTM(units=num_l1,
+                activation='tanh',
+                batch_input_shape=(None, X_train_t.shape[1], X_train_t.shape[2])))
+# 第2層
+model.add(Dense(num_l2, activation='relu'))
+# 出力層
+model.add(Dense(num_output, activation='sigmoid'))
+# ネットワークのコンパイル
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# モデルの学習の実行（学習の完了までには数秒から数十秒ほど時間がかかります。）
+result = model.fit(x=X_train_t, y= y_train_t, epochs=80, batch_size=24, validation_data=(X_val_t, y_val_t))
+
+学習曲線の確認
+モデルの学習経過は次のように辞書型のデータresult.historyに記録されているのでした。
+
+変数名	内容
+result.history['loss']	学習データの損失
+result.history['val_loss']	検証データの損失
+result.history['acc']	学習データの正解率
+result.history['val_acc']	検証データの正解率
+学習経過として損失を可視化して確認します。
+
+# matplotlibのインポート
+from matplotlib import pyplot as plt
+
+# 損失のグラフの描画
+plt.subplot(1, 2, 1)
+plt.plot(result.history['loss'])
+plt.plot(result.history['val_loss'])
+plt.legend(['Train', 'Val'])
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.title('Loss')
+
+# 正解率のグラフの描画
+plt.subplot(1, 2, 2)
+plt.plot(result.history['acc'])
+plt.plot(result.history['val_acc'])
+plt.legend(['Train', 'Val'])
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.title('Accuracy')
+
+# 描画の実行
+plt.show()
