@@ -1,0 +1,53 @@
+習曲線の確認
+モデルの学習経過は resultに記録されています。result.historyは辞書型のデータとなっており、
+学習データと検証データの損失と正解率がそれぞれ記録されています。
+
+変数名	内容
+result.history['loss']	学習データの損失
+result.history['val_loss']	検証データの損失
+result.history['acc']	学習データの正解率
+result.history['val_acc']	検証データの正解率
+学習データと検証データの損失を折れ線グラフで描画して、モデルの学習経過を確認します。
+
+# matplotlibのインポート
+from matplotlib import pyplot as plt
+
+# 折れ線グラフによる学習データの損失の描画
+plt.plot(result.history["loss"])
+
+# 折れ線グラフによる検証データの損失の描画
+plt.plot(result.history["val_loss"])
+
+# 凡例の指定
+plt.legend(['Train', 'Val'])
+
+正解率の確認
+各エポックでのモデルの正解率についても確認しておきましょう。
+先ほど述べた通り、学習データの正解率はresult.history['acc']、検証データの正解率はresult.history['val_acc']に記録されています。
+これらも折れ線グラフで描画して確認しておきましょう。
+
+# グラフの軸タイトルの指定
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+
+# 描画の実行
+plt.show()
+
+# matplotlibのインポート
+from matplotlib import pyplot as plt
+
+# 折れ線グラフによる学習データの正解率の描画
+plt.plot(result.history["acc"])
+
+# 折れ線グラフによる検証データの正解率の描画
+plt.plot(result.history["val_acc"])
+
+# 凡例の指定
+plt.legend(['Train', 'Val'])
+
+# グラフの軸タイトルの指定
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+
+# 描画の実行
+plt.show()
