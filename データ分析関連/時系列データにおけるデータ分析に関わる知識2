@@ -1,0 +1,31 @@
+前回までは指数加重移動平均を使って外れ値を探してきました。
+
+今回は指数加重移動標準偏差も算出し、標準偏差からN倍以上外れているデータを外れ値としてプロットすることを考えましょう。
+数式として落とし込むことで、様々な時系列データに対応することが可能となります。
+
+def plot_outlier(ts, ewm_span=90, threshold=3.0):
+    
+    fig, ax = plt.subplots()
+    # 指数加重移動平均の算出
+    ewm_mean = ts.ewm(span=ewm_span).mean()  
+    # 指数加重移動標準偏差の算出
+    ewm_std = ts.ewm(span=ewm_span).std()  
+    ax.plot(ts, label='original')
+    ax.plot(ewm_mean, label='ewma')
+
+    # 標準偏差から 3.0 倍以上外れているデータを外れ値としてプロットする
+    ax.fill_between(ts.index,
+                    ewm_mean - ewm_std * threshold,
+                    ewm_mean + ewm_std * threshold,
+                    alpha=0.2)
+    outlier = ts[(ts - ewm_mean).abs() > ewm_std * threshold]
+    ax.scatter(outlier.index, outlier, label='outlier')
+    ax.legend()
+    plt.show()
+    return fig,outlier
+ax.fill_betweenについて詳しく見ていきましょう。
+ax.fill_betweenは特定の範囲の塗りつぶしになり、第1引数にx軸の配列、第2引数にｙ軸の配列（範囲の下限）、
+第3引数にｙ軸の配列（範囲の上限）を指定します。
+またoutlier=の部分で、外れ値となるデータを見つけ出し、点としてプロットしています。
+
+実際にパラメータ（ewm_span、threshold）を変化させながら、外れ値を可視化してみましょう。
