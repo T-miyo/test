@@ -1,0 +1,21 @@
+時系列データなどのテーブルデータでは、異常値や外れ値を処理することが必要です。
+なぜなら時系列データの場合、その異常値に引っ張られて全体の傾向がずれてしまう可能性があるから
+
+外れ値は平均と分散から傾向から大きく逸脱していると仮定し、色々な数値を算出しながら外れ値を除去する
+今回の場合は指数加重移動平均と指数加重移動標準偏差を使って、標準偏差から離れ過ぎているものを炙り出します。
+指数加重移動平均は簡単に言うと、過去の価格よりも直近の価格になるほど比重を置いて計算された平均値です。
+証券や株など金融の世界でよく用いられます。
+指数加重移動平均の詳細：https://www.moneypartners.co.jp/support/tech/ema.html
+
+Pythonでは.ewm().mean()を使って、指数加重移動平均を算出でき、ewmの引数spanで減衰の間隔を指定できます。
+
+# 指数加重移動平均の算出
+ewm_mean = tt['Total Volume'].ewm(span=90).mean()  
+
+#グラフで視覚的にも外れ値の確認
+import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        ax.plot(df['Total Volume'], label='original')
+        ax.plot(ewm_mean, label='ewma')
+        ax.legend()
+        plt.show()
