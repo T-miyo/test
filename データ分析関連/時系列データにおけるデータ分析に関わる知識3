@@ -1,0 +1,38 @@
+外れ値の処理も最終段階です。前回までの関数で外れ値を特定することができたので、その値を使って外れ値を除去します。
+まず外れ値を特定しましょう。
+
+# ライブラリのインポート
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# データの読み込み
+df = pd.read_csv("avocado_encoded_m2.csv")
+
+
+def plot_outlier(ts, ewm_span=90, threshold=3.0):
+
+    fig, ax = plt.subplots()
+    # 指数加重移動平均の算出
+    ewm_mean = ts.ewm(span=ewm_span).mean()  
+    # 指数加重移動標準偏差の算出
+    ewm_std = ts.ewm(span=ewm_span).std()  
+    ax.plot(ts, label='original')
+    ax.plot(ewm_mean, label='ewma')
+
+    # 標準偏差から 3.0 倍以上外れているデータを外れ値としてプロットする
+    ax.fill_between(ts.index,
+                    ewm_mean - ewm_std * threshold,
+                    ewm_mean + ewm_std * threshold,
+                    alpha=0.2)
+    outlier = ts[(ts - ewm_mean).abs() > ewm_std * threshold]
+    ax.scatter(outlier.index, outlier, label='outlier')
+    ax.legend()
+    plt.show()
+    return fig,outlier
+
+fig,out_fil = plot_outlier(df['Total Volume'],ewm_span=90, threshold=3.0);
+#外れ値のレコードを抽出
+df[df.index.isin(out_fil.index)]
+#外れ値を除去し、dfに読み込む[~でnotと同じ意味になる]
+df = df[~df.index.isin(out_fil.index)]
+
