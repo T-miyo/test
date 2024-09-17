@@ -1,0 +1,45 @@
+画像データを用いたデータ解析(今回は鋳造製品の欠陥検出)を学んだ為、
+基本的な内容と学んだ手法のメモ
+
+ファイル操作
+鋳造画像データが全てzip形式
+PC上のどこにデータがあるのかを確認
+ディレクトリ構成を確認するために、osというライブラリをインポート
+任意のフォルダ上のファイル一覧を確認したい場合は、os.listdir()を用い、引数に一覧を確認したい場所の絶対パスもしくは相対パスを指定します。
+カレントディレクトリ（'./'）のファイル一覧を確認
+# ライブラリのインポート
+import os
+
+# 現在の作業ディレクトリのファイル一覧を変数filesに代入し、一覧を表示してください
+files = os.listdir('./')
+print(files)
+
+# 現在の作業ディレクトリのファイル一覧が代入されている変数filesのデータ型を表示してください
+print(type(files))
+
+zipファイル解凍
+zipファイルに対しての処理はライブラリzipfileを用います。
+まず、解凍したいzipファイルの中身の構造を確認します。
+.namelist()でアーカイブされているファイルのリストをフォルダを含んで取得できます。
+
+# ライブラリのインポート
+import os
+import zipfile
+
+# zip解凍用の関数定義
+引数INPATHに解凍したいzipのパス、引数OUTPATHに解凍を行いたい場所のパスを指定することで該当zipの解凍を行うことができます。
+def unzip_dataset(INPATH,OUTPATH):
+    with zipfile.ZipFile(INPATH) as zf:
+        zf.extractall(OUTPATH)
+
+# zip解凍(※数秒から数十秒かかる場合があります)
+unzip_dataset(INPATH='./image_data.zip',OUTPATH="'./'")
+
+# osを使って、ファイルの一覧確認
+print(os.listdir('./image_data/train/ok'))
+
+
+
+
+
+
