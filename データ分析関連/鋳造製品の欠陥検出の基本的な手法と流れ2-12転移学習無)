@@ -1,0 +1,30 @@
+推論用データセット作成【transforms】
+推論用のデータセットに関しても、学習時に用いたデータセットと同様にデータセットを作成する必要がある
+この場合も前回同様にtransforms、Dataset、DataLoaderの3つのモジュールで処理を行う
+【transforms/Dataset/DataLoaderの役割】
+
+transforms
+データ前処理を定義するモジュール
+Dataset
+データと対応するラベルを1組返すモジュール
+transformsを使って定義した前処理を画像データに対して行う
+DataLoader
+データセットからデータをバッチサイズに固めて返すモジュール
+また、今回は鋳造製品の推論用画像データに対して、以下3つの処理をtransformsに定義します。
+
+データ前処理
+画像サイズを256に統一
+テンソル化
+正規化
+訓練用のデータセットを作成した流れと同様
+
+# ライブラリのインポート
+from torchvision import transforms
+
+# 推論用のtransforms作成
+test_transforms = transforms.Compose([
+               transforms.Resize(256),
+               transforms.ToTensor(),
+               transforms.Normalize([0.485, 0.456, 0.406] , [0.229, 0.224, 0.225]),
+
+])
