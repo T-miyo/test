@@ -1,0 +1,86 @@
+データセット作成流れについて
+現時点では画像データがokとngのフォルダに含まれているだけで、それぞれの画像に対してのラベルはついていません。
+この状態では、モデルは学習できないので、入力データとそれに対応するラベルを1組かえしてくれるように設定する必要があります。
+
+また、データの前処理としてデータの正規化やサイズ統一をする必要もあります。
+このような流れをPytorchでは個別に処理を行わず、transforms、Dataset、DataLoaderの3つのモジュールを使って、まとめて処理を行います。
+役割の違いは下記のようになります。大切な3点セット
+【transforms/Dataset/DataLoaderの役割】
+
+transforms
+データ前処理を定義するモジュール
+Dataset
+データと対応するラベルを1組返すモジュール
+transformsを使って定義した前処理を画像データに対して行うモジュール
+DataLoader
+データセットからデータをバッチサイズに固めて返すモジュール
+データセット作成の流れはtransforms→Dataset→DataLoaderの流れとなっており、画像分類モデルはDataLoaderによって渡されるデータを元に学習します。
+次回からtransforms、Dataset、DataLoaderの3つのモジュールを個別に説明していきます。
+transformsでは画像データの前処理を行います。画像前処理に必要な関数が様々実装されているので、個別に実装する手間が省けます。
+また前処理だけではなく、1枚の画像を水増しする技術(Data Augmentation)を行うこともできます。
+
+今回は鋳造製品の画像データに対して、以下4つの処理を定義します。
+以下の画像処理は画像分類を行う上でベーシックな前処理となります。
+
+データ前処理
+画像サイズを256に統一（(訓練データ、検証データともに）
+テンソル化(訓練データ、検証データともに）
+正規化(訓練データ、検証データともに)
+Data Augmentation
+水平方向へのランダム反転(※訓練データに対してのみ)
+実際には、学習時（train）に行う処理と検証時（val）に行う処理とに、分けて記述することになります。
+学習時と検証時に分ける理由は、DataAugmentationを検証するデータに対して行ってしまうと、
+モデルのパラメータやlossを計算する際に誤差が生じてしまい、 
+モデルが何も加工していない本来の画像に対しての推論がうまく行えないという事象に陥ってしまう為です。
+そのため、transforms.Compose()を用いて、学習時（train）に行う処理、検証時（val）に行う処理を分けて記載します。
+
+まずは、サイズ統一とデータのテンソル化を行います。この処理は学習時・検証時ともに行います。
+サイズの統一はtransforms.Resize()を用い、引数に変更したいサイズを指定します。今回はサイズを256とします。
+テンソル化はtransforms.ToTensor()を用い、特に引数指定はありません。
+データの処理は上から順に指定したものから実行されていきます、そのため先にサイズ統一を行なっています。
+(※テンソル化を先に行なってしまうと、データを画像として判断できなくなるためリサイズの処理が行われなくなってしまいます。)
+
+data_transforms = {
+    'train': transforms.Compose([
+        transforms.Resize(256),
+        transforms.ToTensor(),     
+    ]),
+    'val': transforms.Compose([
+        transforms.Resize(256),
+        transforms.ToTensor(),
+        
+    ]),
+}
+次に、学習用のtransformsのみ、水平方向へのランダム反転を行います。
+水平ランダム反転はtransforms.RandomHorizontalFlip()を用い、引数に該当の処理を行う確率pを指定します（0<=p<=1）
+
+data_transforms = {
+    'train': transforms.Compose([
+        transforms.Resize(256),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.ToTensor(), 
+    ]),
+    'val': transforms.Compose([
+        transforms.Resize(256),
+        transforms.ToTensor(), 
+    ]),
+}
+最後にデータの正規化を行なっていきます。
+機械学習では扱うデータを最小値0、最大値1に変換する正規化を行い、データの外れ値に対しての影響を小さくする工夫がしばしば行われます。
+データの正規化はtransforms.Normalize()を用い、引数に画像の各チャンネルの平均及び標準値を指定します。
+各チャンネルの平均及び標準偏差には、Imagenetと呼ばれる画像データセットの平均と標準偏差を使用するのは一般的な方法です。
+そのため、平均に[0.485, 0.456, 0.406]、標準偏差に[0.229, 0.224, 0.225]を指定しています。
+
+data_transforms = {
+    'train': transforms.Compose([
+        transforms.Resize(256),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ]),
+    'val': transforms.Compose([
+        transforms.Resize(256),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ]),
+}
