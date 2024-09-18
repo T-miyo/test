@@ -1,0 +1,61 @@
+Dataloader
+Dataloaderは、datasetsから画像データをバッチごとに取り出すことを目的に使われます。
+バッチ毎にデータを取り出すことによって、学習を行う計算機のスペックに合わせて学習を行うことが可能となります。
+
+Dataloaderはtorch.utils.data.DataLoaderを用い、メインで用いる引数の詳細は以下となります。
+
+引数dataset: loaderで読み込むデータセット
+引数batch_size: バッチサイズ
+引数shuffle: データをshuffleするか（True もしくは False）
+引数num_workers: 実行プロセス数（デフォルトは0）
+引数drop_last: 残りデータ数がバッチサイズに満たない場合にスキップするか（True もしくは False）
+まず前回同様、zip解凍からdataset作成までを行います。
+
+import zipfile
+from torchvision import transforms,datasets
+
+# zip解凍用関数定義
+def unzip_dataset(INPATH,OUTPATH):
+    with zipfile.ZipFile(INPATH) as zf:
+        zf.extractall(OUTPATH)
+
+# zip解凍（※operation初回のみ必要）
+unzip_dataset(INPATH='./image_data.zip',OUTPATH='./')
+
+
+# transforms定義
+data_transforms = {
+    'train': transforms.Compose([
+        transforms.Resize(256),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ]),
+    'val': transforms.Compose([
+        transforms.Resize(256),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ]),
+}
+
+# dataset作成
+image_datasets = {
+    'train': datasets.ImageFolder('./image_data/train',data_transforms['train']),
+    'val': datasets.ImageFolder('./image_data/val',data_transforms['val'])
+}
+
+Datasetまでの作成が終わったので、Dataloaderの作成を行います。
+Dataloaderの構造についてもtransformやDataset同様に学習と検証をわけますと明記しておきます。
+バッチサイズは4、データのshuffleについては学習用はshuffle有、検証用は無、num_workersは0、drop_lastは有としてみましょう。
+import torch
+
+image_dataloaders = {
+    'train': torch.utils.data.DataLoader(image_datasets['train'], batch_size=4,shuffle=True, num_workers=0, drop_last=True),
+    'val': torch.utils.data.DataLoader(image_datasets['val'], batch_size=4,shuffle=False, num_workers=0, drop_last=True),
+}
+
+Dataloaderからのデータの取り出しにはfor文を使います。
+for文により、1loopする度に、loaderからバッチサイズ分のinputデータとlabelデータを取り出すことができます。
+下記例では、表示数が多すぎることを避けるため、for文内の処理を1回のみ表示しています。
+データセット作成をtransforms→Dataset→DataLoaderの流れで説明しました。
+一連の流れのソースコードは、右上に記載してます。モデル学習に伴い、頻繁に使うソースコードとなります
