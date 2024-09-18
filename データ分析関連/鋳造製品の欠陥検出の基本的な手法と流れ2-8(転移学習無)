@@ -1,0 +1,102 @@
+モデル学習の流れの整理
+# エポック数だけ下記工程の繰り返し
+    # 訓練フェイズ
+    A. モデルを訓練モードに変更
+        ＃ dataloadersからバッチサイズだけデータ取り出し、下記工程（1−5）の繰り返し
+        1. optimizerの勾配初期化
+        2. モデルに入力データをinputし、outputを取り出す
+        3. outputと正解ラベルから、lossを算出
+        4. 誤差逆伝播法により勾配の算出
+        5. optimizerのパラメータ更新
+        
+    # 推論フェイズ        
+    B. モデルを推論モードに変更
+        ＃ dataloadersからバッチサイズだけデータ取り出し、下記工程（1、２）の繰り返し
+        1. optimizerの勾配初期化
+        2. モデルに入力データをinputし、outputを取り出す
+        3. outputと正解ラベルから、lossを算出
+    
+    C. 今までのエポックでの精度よりも高い場合はモデルの保存
+モデルの学習というとわかりにくいですが、簡単にいうとパラメータ変更の試行錯誤
+モデルにデータを入力し、outputを出力。outputと正解データを比べ、どこが間違っていたのかを誤差逆伝播という方法でフィードバックします。
+そのフィードバックを受けて、パラメータ変更を行い、再度実施。
+この流れをループすることで、モデルを賢くしていきます。
+
+
+モデル学習【学習用関数確認1】
+モデルの学習のために関数train_model（）を設定します。
+train_model（）の引数には、model,criterion,optimizer,num_epochs、is_savedの5種類を設定します。
+モデル訓練用の関数を設定することで、同じようなプログラムを複数書くことを防ぐ意図もあります。
+
+引数model: 学習対象のモデル
+引数criterion: loss関数
+引数optimizer: 最適化関数
+引数num_epochs: エポック数（デフォルトは5）
+引数is_saved: 学習したモデルを保存するか（デフォルトはFalse）
+まず学習の全体像を知るために、学習用関数全体を記載します。
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import Dataset
+from torchvision import datasets, models, transforms
+from PIL import Image, ImageFilter
+
+DEVICE= "cpu"
+
+# モデル学習用関数
+def train_model(model, criterion, optimizer, num_epochs=5,is_saved = False):
+    best_acc = 0.0
+
+    # エポック数だけ下記工程の繰り返し
+    for epoch in range(num_epochs):
+
+        for phase in ['train', 'val']:
+            print('{}:フェイズ'.format(phase))
+
+            # 訓練フェイズと検証フェイズの切り替え
+            if phase == 'train':
+                model.train() 
+            else:
+                model.eval()  
+
+            running_loss = 0.0
+            running_corrects = 0
+
+            # dataloadersからバッチサイズだけデータ取り出し、下記工程（1−5）の繰り返し
+            for i,(inputs, labels) in enumerate(image_dataloaders[phase]):
+                inputs = inputs.to(DEVICE)
+                labels = labels.to(DEVICE)
+
+                # 1. optimizerの勾配初期化
+                optimizer.zero_grad()
+
+                # 2.モデルに入力データをinputし、outputを取り出す
+                outputs = model(inputs)
+                _, preds = torch.max(outputs, 1)
+
+                # 3. outputと正解ラベルから、lossを算出
+                loss = criterion(outputs, labels)
+                print('   loaders:{}回目'.format(i+1)  ,'   loss:{}'.format(loss))
+
+                if phase == 'train':                        
+                    # 4. 誤差逆伝播法により勾配の算出
+                    loss.backward()
+                    # 5. optimizerのパラメータ更新
+                    optimizer.step()
+
+                running_loss += loss.item() * inputs.size(0)
+                running_corrects += torch.sum(preds == labels.data)
+
+            epoch_loss = running_loss / dataset_sizes[phase]
+            epoch_acc = running_corrects.double() / dataset_sizes[phase]
+            print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+
+            # C. 今までのエポックでの精度よりも高い場合はモデルの保存
+            if phase == 'val' and epoch_acc > best_acc:
+                best_acc = epoch_acc
+                if(is_saved):
+                    torch.save(model.state_dict(), './original_model_{}.pth'.format(epoch))
+
+    print('Best val Acc: {:4f}'.format(best_acc))
+    
