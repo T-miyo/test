@@ -1,0 +1,63 @@
+モデルの学習準備【最適化手法/loss関数選定】
+#1：最適化手法選定について
+今回は鋳造画像における欠陥の検出
+正常品であるか、欠陥品であるかの2値分類モデルの学習を行うので
+確率的勾配降下法(SGD)を用います。
+確率的勾配降下法(SGD)は、torch.optimからSGDをインポートします。
+引数の詳細は以下となっています。
+
+引数params: 最適化するパラメーター
+引数lr: 学習率（float）
+引数momentum: モーメンタム（float）
+引数dampening: モーメンタムの勢い（float）
+引数weight_decay: L2ノルムの強さ（float）
+引数nesterov: 乱数の設定
+ResNet18では、引数のうちparamsとlr、momentumを用います。
+まず、ResNetを定義し、パラメータ更新用にネットワークのインスタンスを作成
+
+#ライブラリのインポート
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import datasets, models, transforms
+
+
+# 定数設定
+device = "cpu"
+TARGET_NUM = 2
+
+# モデル定義
+def get_model(target_num,isPretrained=False):
+    """for get model"""
+
+    model_ft = models.resnet18(pretrained=isPretrained)
+    model_ft.fc = nn.Linear(512, target_num)
+    model_ft = model_ft.to(device)
+    return model_ft
+
+
+# モデルのインスタンス作成
+model_ft = get_model(target_num=TARGET_NUM,isPretrained=False)
+
+# 最適化関数定義
+optimizer = optim.SGD(model_ft.parameters(),lr=0.001, momentum=0.9)
+
+# loss関数定義
+criterion = nn.CrossEntropyLoss()
+
+print(type(optimizer))
+
+その後optimizerを作成します。
+学習率lrは比較的小さめの0.001、モーメンタムmomentumは0.9に設定します。
+学習率は0.1などの大きいものに設定するとうまく学習しない可能性があるのでまずは0.001とし、
+学習の塩梅を確認しながら必要があれば再設定していきます
+モーメンタムはパラメータの更新をより慣性的なものにするという狙いがあります。
+optimizerの勾配の初期化を行う際は、optimizer.zero_grad()、ネットワークのパラメータの更新はoptimizer.step()で行います。
+
+予測精度を評価する際に用いるのがloss（損失）関数です。
+loss（損失）関数は予測と実際の値のズレの大きさを表す関数でモデルの予測精度を評価します。
+loss（損失）関数の値が小さければより正確なモデルと言えます。
+ネットワークを学習させる過程でうまくlossが小さくなっているかが学習がうまくいっているのかの指標となります。
+鋳造製品の欠陥検出は正常品であるか、欠陥品であるかの分類問題となるため交差エントロピー誤差を用います。
+PyTorchではnn.CrossEntropyLoss()として、交差エントロピー誤差を定義し、変数criterionにloss関数を設定するのが通例
+# loss関数定義
+criterion = nn.CrossEntropyLoss()
