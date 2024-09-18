@@ -1,0 +1,86 @@
+推論用データセット作成【Dataset】
+推論用のtransformsを定義しました。
+今回は定義したtransformsを元に、Datasetを作成
+訓練用のDataset作成時には、各フォルダに学習用と検証用のデータが揃っていたのでdatasets.ImageFolder（）を用いました。
+しかし、推論用のデータは1フォルダ内に正常品okと欠陥品ngが混在しているため、datasets.ImageFolder（）を用いることはできません。
+
+このような場合はDatasetを自作し、画像1枚1枚に対して正常品であるか欠陥品であるかのラベルを紐つける必要があります。
+そのためにはどうすればよいでしょうか。推論用データの整理で作成した、df_test.csvが非常に役に立ちます。
+
+PyTorchを使ったDatasetに自作方法には大きく4つの流れが存在
+
+#0：classとしてDataset作成
+#1：init関数の定義
+#2：__len__関数の定義
+#3：__getitem__関数の定義
+まず、#0：classとしてDataset作成
+
+PyTorchではモデルの定義をclassとして定義したように、Datasetもクラスとして定義します。
+下記のようにtorch.utils.data.Datasetを継承したクラスで、クラス内に関数を3つ定義します。
+PyTorch道場で行なったモデル定義と同様にまず、クラスのひな型を作成
+import pandas as pd
+from torch.utils.data import Dataset
+
+class Test_Datasets(Dataset):
+
+    def __init__(self, data_transform):
+        処理XXXX,
+        処理XXXX,
+
+    def __len__(self):
+        処理XXXX,
+        処理XXXX,
+
+    def __getitem__(self, index):
+        処理XXXX,
+        処理XXXX,
+
+        return
+上記のようにクラスとしてDatasetを継承し、関数を3つ定義
+
+関数の名前に全てに__XX__がついていますが、これは特殊メソッド（Special method）を意味するメソッド
+次は#1：init関数の定義です。initはインスタンス化を行う時に必ず最初に呼び出される特殊な関数
+まず、ファイル名と対応したラベルが記載されているdf_test.csvを読み込むべき
+import pandas as pd
+from torch.utils.data import Dataset
+
+class Test_Datasets(Dataset):
+
+    def __init__(self, data_transform):
+        
+        self.df = pd.read_csv('./df_test.csv',names=['filename','target'])
+        self.data_transform = data_transform
+
+    def __len__(self):
+
+    def __getitem__(self, index):
+
+        return
+次は#2：__len__関数の定義と#3：__getitem__関数の定義です。
+__len__関数にて、データセットの大きさを定義します。今回であれば10枚の画像を持っていることを定義
+また、#3：__getitem__関数の定義では、obj[i]のようにインデックスで指定されたときにコールされる関数
+__getitem__では画像1枚1枚をPillowを用いて読み込み、その1枚1枚に対してtransformerで定義したデータ前処理を適用
+今回は推論用のデータセットなのでラベル（正常品であるか欠陥品であるか）は付与せず、各々のファイル名を返す処理を記載
+import pandas as pd
+from torch.utils.data import Dataset
+from PIL import Image
+
+class Test_Datasets(Dataset):
+
+    def __init__(self, data_transform):
+        
+        self.df = pd.read_csv('./df_test.csv',names=['filename','target'])
+        self.data_transform = data_transform
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, index):
+        
+        file = self.df['filename'][index]
+        image = Image.open('./test_data/'+ file)
+        image = self.data_transform(image)
+
+        return image,file
+
+
