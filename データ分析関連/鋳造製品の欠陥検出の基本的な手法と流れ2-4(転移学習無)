@@ -1,0 +1,34 @@
+モデル定義1
+今回はResNet18のモデル定義を行います。
+総数が18層にもなるResNet18を1からモデル定義をするのは大変かつ、複雑なので間違ったネットワークを作成してしまう恐れがあります。
+そのケースを回避するために、今回はライブラリtorchvisionを用います。
+torchvisionには様々なモデルの定義が実装されており、そのモデル定義を引用することで手間やミスの可能性を省きます。
+画像分類のモデルは現在下記のモデルが実装されています。
+
+【torchvisionに実装済みの代表的画像分類モデル】
+AlexNet
+VGG
+ResNet
+SqueezeNet
+DenseNet
+Inception v3
+GoogLeNet
+ShuffleNet v2
+MobileNet v2
+ResNeXt
+Wide ResNet
+MNASNet
+etc...
+ResNet18のモデル定義はtorchvisionの中のmodelsというモジュールを用います。
+また、そのモジュールの中のmodels.resnet18()を用い、引数にはpretrainedという学習済モデルをロードするかを指定する引数があります。
+今回は、まずモデルの定義をロード
+
+from torchvision import datasets, models, transforms
+
+model_ft = models.resnet18(pretrained=False)
+
+上記のプログラムのみで、複雑なモデルの定義が終わり
+このモデルでは今回の鋳造製品の欠陥を検出するモデルには適していません。
+一度表示したモデルの最終層を確認してみましょう。
+最終層にout_features=1000とありますが、このままだと出力が1000クラスとなってしまいます。
+欠陥検出モデルは正常品か欠陥品かの2値分類となるので最終層を書き換える必要があります。
