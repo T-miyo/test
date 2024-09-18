@@ -1,0 +1,34 @@
+モデル学習【学習用関数確認3】
+# 2.モデルに入力データをinputし、outputを取り出す
+outputs = model(inputs)
+_, preds = torch.max(outputs, 1)
+モデルに対してインプットを入力した際のアウトプットは、正常品だと判断したか欠陥品と判断したかの2値分類となっているため、
+出力も[0.121,0.912]などの2クラスとなっています。
+出力が[0.121,0.912]であれば、値の大きいindexは1(=正常品)となるのでモデルはこの画像は正常品に分類していることになります。
+そのため、torch.max(outputs, 1)を用い、最も高い値のindexを取得し、このindexがモデルの予測したラベルとなります。
+
+running_loss += loss.item() * inputs.size(0)
+running_corrects += torch.sum(preds == labels.data)
+print(torch.sum(preds == labels.data))
+このプログラムでは、各loaderが回る際のlossの値と、出力とラベルが一致してた数をそれぞれ足し上げています。
+学習内部ではバッチサイズ分（画像4枚）をまとめ、lossを計算していますが、
+そのまとめたlossに再度バッチサイズ（inputs.size(0)）をかけることにより画像個別のlossを取り出しています。
+running_loss += loss.item() * inputs.size(0)の右辺は具体的に言うと、lossの値×バッチサイズの足し上げとなり、
+running_corrects += torch.sum(preds == labels.data)の右辺は具体的に言うと、正解と出力のラベルが合っていた数の足し上げを行っています。
+
+epoch_loss = running_loss / dataset_sizes[phase]
+epoch_acc = running_corrects.double() / dataset_sizes[phase]
+print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+このプログラムはdataloadersの最後の部分となっています。
+epoch_lossは今までで足し上げしていたlossの値をデータサイズで割り、平均のlossを算出しています。
+epoch_accは今までで正解と出力のラベルが合っていた数の足し上げをデータサイズで割り、総データの中でどれだけ正解していたかのAccuracyを算出
+
+# C. 今までのエポックでの精度よりも高い場合はモデルの保存
+if phase == 'val' and epoch_acc > best_acc:
+    best_acc = epoch_acc
+    if(is_saved):
+        torch.save(model.state_dict(), './original_model_{}.pth'.format(epoch))
+このブロックでは各エポックでの計算の終わりに、今までのエポックとのAccuracyを比較しています。
+もし、Accuracyが今までのエポックよりも高かった場合は、torch.save()にてモデルの保存を行います。
+
+以上にてモデルの学習の説明
