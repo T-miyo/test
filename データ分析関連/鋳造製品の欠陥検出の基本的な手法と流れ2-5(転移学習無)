@@ -1,0 +1,45 @@
+モデル定義2
+前回のResNet18をライブラリtorchvisionを用いて定義しました。
+今回は欠陥検出モデル用にResNet18の最終層の変更
+
+from torchvision import datasets, models, transforms
+
+model_ft = models.resnet18(pretrained=False)
+
+ロードしたモデルの最終層はモデル.fcと記述することで確認できます。
+
+In [1]: print(model_ft.fc)
+
+Out[1]: Linear(in_features=512, out_features=1000, bias=True)
+
+欠陥検出モデルの最終層となるのでout_features=2と変更しましょう。
+最終層は線形結合層となるので、torch.nnをインポートし、nn.Linear()を用い、
+引数にはin_features（入力クラス数）とout_features（出力クラス数）を与えます。
+
+import torch.nn as nn
+
+model_ft.fc = nn.Linear(in_features=512, out_features=2, bias=True)
+
+モデルの学習がスムーズに行くように、モデル作成（=モデルロード→最終層変更）を関数化しておきましょう。
+下記プログラムで、.to(device)とありますが、これは処理をCPUで行うかGPUで行うかを明確化するための処理となります。
+今回はcpuを用いて学習するので、device = "cpu"としています。
+引数target_numには、出力のクラス数を、引数isPretrainedには転移学習を行うかの真理値を渡しましょう。
+
+import torch.nn as nn
+from torchvision import datasets, models, transforms
+
+device = "cpu"
+
+def get_model(target_num,isPretrained=False):
+    
+    model_ft = models.resnet18(pretrained=isPretrained)
+    model_ft.fc = nn.Linear(512, target_num)
+    model_ft = model_ft.to(device)
+    return model_ft
+
+ResNet18モデルの定義はできました。
+下記の順番にて、学習のための準備を行っていきます。
+
+#0：データの検証法選定
+#1：最適化手法選定
+#2：loss関数の選定
