@@ -1,0 +1,49 @@
+学習時ログ可視化【転移学習無】
+lossの下がり方を学習時と検証時に分けて可視化することで、
+過学習をしているのかやどのくらいのエポックまで学習すればよいのかを確認することができます。
+今回のloss関数は下記の条件にて行なった学習ログとなります。
+【学習時条件】
+
+モデル：ResNet18
+転移学習：無
+データ量
+学習データ：6633枚
+検証データ：715枚
+optimizer：SGD(lr=0.001, momentum=0.9)
+loss関数：CrossEntropyLoss
+バッチサイズ:32
+エポック：100
+データ前処理
+リサイズ（256）
+ランダム水平反転（p=0.5）
+テンソル化
+正規化
+
+推論用データの整理
+学習済みモデルを使い、未知の画像データに対する推論について取り組む
+モデルが学習時にも検証時にも全くみたことない未知データを集めて、zip形式(test_data.zip)としているので解凍
+import zipfile
+
+def unzip_dataset(INPATH,OUTPATH):
+    with zipfile.ZipFile(INPATH) as zf:
+        zf.extractall(OUTPATH)
+        
+unzip_dataset(INPATH='./test_data.zip',OUTPATH='./')
+zipで解凍を行なったフォルダのリストをos.listdir()を使用して確認
+
+import pandas as pd
+df_test = pd.DataFrame(data=os.listdir('./test_data/'))
+画像データのリストを全てDataFrame形式に変換し扱いやすいようにしましょう。
+DataFrame形式にするには、pandasというライブラリのpandas.DataFrame()を用い、引数にデータ一覧のリストを指定
+
+カラムの名前が0となっているためわかりにくいですね。カラム名をfilenameという名前に変更しましょう。
+DataFrame形式になっているデータのカラム名変更は.rename()を用い、変更前のカラム名と変更後のカラム名の辞書を引数として指定
+df_test = df_test.rename(columns={0: 'filename'})
+また、その画像が正常品であるのか欠陥品であるのか（正常品:1、欠陥品:0）のラベルも新規カラムtargetとして追加
+まず一律に0を代入し、その後、ファイル名にokという文字列を含むものには1を再代入する方法をとりましょう。
+条件に応じて値の変更を行う場合は、.locを用い、第一引数に条件、第二引数に代入対象のカラム名を指定します。
+
+df_test['target'] = 0
+
+df_test.loc[df_test['filename'].str.contains('ok'),'target'] = 1
+上記により、ライブラリosを使ったファイル操作を行わずともcsv形式で画像データを管理することが可能に
