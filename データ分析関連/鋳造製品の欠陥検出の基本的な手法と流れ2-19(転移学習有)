@@ -1,0 +1,55 @@
+DataAugmentation【ランダムグリッドシャッフル】
+DataAugmentationのライブラリalbumentationsを利用します。
+このライブラリに関しても、どんな処理を行うのかの定義は全てtransformsに記載するため、
+プログラムの変更が少なく実施することができる便利なライブラリとなっています。
+
+まず下準備として、任意の画像データを5枚のみzip形式（augment_data.zip）として保存してあるのでzip解凍。
+さらには、データ表示のための関数も前回同様に用意
+
+import zipfile
+import torch
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+from torchvision import transforms, datasets
+
+def unzip_dataset(INPATH,OUTPATH):
+    with zipfile.ZipFile(INPATH) as zf:
+        zf.extractall(OUTPATH)
+
+unzip_dataset(INPATH='./augment_data.zip',OUTPATH='./')
+
+
+def show_augment(dataset):
+    for i in range(0, 6):
+        ax = plt.subplot(2, 3, i + 1)
+        plt.tight_layout()
+        ax.set_title(str(i))
+        plt.imshow(dataset[i][0])
+    plt.show()
+
+DataAugmentationとして、ランダムグリッドシャッフルを行います。
+一枚の画像をパズルのように分割し、敷き詰め直すという処理
+ランダムグリッドシャッフルはalbumentations.RandomGridShuffle()を用い、引数としてgridの大きさをtuple型、確率pを指定
+この関数にtransformerとして、albumentations_transformを与えることで各々の画像に対して、DataAugmentationを行なっています。
+
+import albumentations
+        albu_transforms = albumentations.Compose([
+                          albumentations.RandomGridShuffle(grid=(3, 3), p=1.0), 
+                        ])
+
+        def albumentations_transform(image, transform=albu_transforms):
+            image_np = np.array(image)
+            augmented = transform(image=image_np)
+            image = Image.fromarray(augmented['image'])
+            return image
+
+        data_transform = transforms.Compose([
+          transforms.Lambda(albumentations_transform),
+        ])
+
+        dataset_augmentated = datasets.ImageFolder(root='./augment_data/', transform=data_transform)
+
+        show_augment(dataset_augmentated)
+
+
