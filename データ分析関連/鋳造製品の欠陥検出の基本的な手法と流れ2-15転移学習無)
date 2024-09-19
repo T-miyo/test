@@ -1,1 +1,32 @@
+学習済みモデルのロード
+学習済みのモデルで未知データに対して推論を行う場合は、学習済のモデルをロードすることが必要
+まず学習済みモデルをロードするために、モデルのインスタンスを用意します。
+モデル定義の時と同様に関数get_modelを用い、今回は正常か欠陥かの2値分類となるため引数target_numに2を指定
+
+# ライブラリのインポート
+import torch.nn as nn
+import torch
+from torchvision import datasets, models, transforms
+
+DEVICE= "cpu"
+
+def get_model(target_num,isPretrained=False):
+    model_ft = models.resnet18(pretrained=isPretrained)
+    model_ft.fc = nn.Linear(512, target_num)
+    model_ft = model_ft.to(DEVICE)
+    return model_ft
+
+best_model = get_model(target_num=2)
+
+best_model.load_state_dict(torch.load('./original_model_33.pth', map_location=lambda storage, loc: storage), strict=True)
+
+print(best_model)
+
+学習済みのモデルをロードする場合は、torch.nn.Module.load_state_dict()
+load_state_dict()の引数strictをFalseにすると、ロード側のモデルのパラメータを設定する際、ロードされる側にしか存在しないものを無視
+学習済みモデルと読み込むモデルの形式に違いはないため、strict=Trueとします。
+また、torch.load()を用い、map_location=lambda storage, loc: storageを用いてることでモデルの各層のパラメータを各層ごとにロード
+実際に、今までの流れを用いて鋳造製品画像を学習させたResNetモデル（original_model_33.pth）を用意していますので、学習済みモデルとしてロード
+best_model.load_state_dict(torch.load('./original_model_33.pth', map_location=lambda storage, loc: storage), strict=True)
+学習済みのモデルをロードすることは頻繁に存在する
 
