@@ -1,0 +1,62 @@
+DataAugmentation【カットアウト】
+下準備として、任意の画像データを6枚のみzip形式（augment_data.zip）として保存してあるのでzip解凍。
+さらには、データ表示のための関数も前回同様に用意
+
+import zipfile
+import torch
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+from torchvision import transforms, datasets
+
+def unzip_dataset(INPATH,OUTPATH):
+    with zipfile.ZipFile(INPATH) as zf:
+        zf.extractall(OUTPATH)
+
+unzip_dataset(INPATH='./augment_data.zip',OUTPATH='./')
+
+
+def show_augment(dataset):
+    for i in range(0, 6):
+        ax = plt.subplot(2, 3, i + 1)
+        plt.tight_layout()
+        ax.set_title(str(i))
+        plt.imshow(dataset[i][0])
+    plt.show()
+
+カットアウトは学習時の画像に対して、ランダムな箇所の矩形領域を切り抜き、グレー化を行うというものです。
+物体認識だけでなく物体検出、人物照合にも精度向上が期待されるAugmentationです。
+カットアウトに関してもalbumentationsに実装されています。
+カットアウトはalbumentations.Cutout()を用い、主な引数は以下です。
+実際に鋳造画像に対しても、カットアウトを行なってみましょう
+
+引数num_holes: ドロップする領域の最大数
+引数max_h_size: ドロップする領域の縦幅最大
+引数max_w_size: ドロップする領域の横幅最大
+引数fill_value: ドロップされた画素の値
+引数p: 発生確率
+
+import albumentations
+# カットアウト定義
+albu_transforms = albumentations.Compose([
+                          albumentations.Cutout(num_holes=8, max_h_size=40, max_w_size=40, fill_value=0, p=1.0),
+                        ])
+
+
+# albumentation用のデータ変換関数
+def albumentations_transform(image, transform=albu_transforms):
+    image_np = np.array(image)
+    augmented = transform(image=image_np)
+    image = Image.fromarray(augmented['image'])
+    return image
+
+# albumentation用のデータ変換関数
+data_transform = transforms.Compose([
+  transforms.Lambda(albumentations_transform),
+])
+
+# データセット定義
+dataset_augmentated = datasets.ImageFolder(root='./augment_data/', transform=data_transform)
+
+# 画像表示
+show_augment(dataset_augmentated)
