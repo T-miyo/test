@@ -1,0 +1,46 @@
+モデル学習【転移学習有】
+今回は事前学習済みのモデルを用いて、転移学習を行います。
+しかし、学習部分の関数については変更はありません。
+
+このように学習する部分の関数と、モデルを作成する関数を分けて用意しておくとモデルが変更になったとしても、
+学習部分に手を加えなくていいのでメンテナンスが簡単になり、簡単なミスも防ぎやすくなります。
+
+DataAugmentation【左右/上下反転】
+データの正規化やリサイズのためにtransformsを用いました。
+このtransformsはデータの前処理だけではなく、簡単なDataAugmentationを行うことも可能です。
+任意の画像データを5枚のみzip形式augment_data.zip）として保存してあるのでzip解凍
+import zipfile
+
+def unzip_dataset(INPATH,OUTPATH):
+    with zipfile.ZipFile(INPATH) as zf:
+        zf.extractall(OUTPATH)
+
+unzip_dataset(INPATH='./augment_data.zip',OUTPATH='./')
+
+このデータをdatasetsとして取り込み、transformsによる処理を行なった画像を表示する関数を作成
+import torch
+import matplotlib.pyplot as plt
+from PIL import Image
+from torchvision import transforms, datasets
+
+def show_augment(dataset):
+    for i in range(0, 6):
+        ax = plt.subplot(2, 3, i + 1)
+        plt.tight_layout()
+        ax.set_title(str(i))
+        plt.imshow(dataset[i][0])
+    plt.show()
+関数show_augmentに対して、任意のdatasetを渡すことで画像を２行3列の形式で出力してくれます。
+
+データセットを作成した時と同様にデータに対しての処理は全て、transformsに定義
+左右反転はtransforms.RandomHorizontalFlip()で行うことができ、引数には左右反転を行う確率p(0<p<1)を指定します。
+同様に、上下反転はtransforms.RandomVerticalFlip()で行うことができます。
+左右反転を確率p=0.5として表示
+transform = transforms.Compose([
+                    transforms.RandomHorizontalFlip(p=0.5),
+                       ])
+aug_dataset = datasets.ImageFolder(root='./augment_data/',transform=data_transform)
+show_augment(aug_dataset)
+データの処理は重ねがけすることも可能なので、何通りもの重ねがけを行うことで様々な形式のデータを生み出すことが可能となります。
+さらに複雑なDataAugmentationを行うために、次回はalbumentationsというライブラリを使用
+
