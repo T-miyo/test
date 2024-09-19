@@ -1,0 +1,20 @@
+推論用データセット作成【DataLoader】
+定義したDatasetを元に、DataLoaderを作成
+Dataloaderは、datasetsから画像データをバッチごとに取り出すことを目的に使われます。
+
+Dataloaderはtorch.utils.data.DataLoaderを用い、メインで用いる引数の詳細は以下
+引数dataset: loaderで読み込むデータセット
+引数batch_size: バッチサイズ
+引数shuffle: データをshuffleするか（True もしくは False）
+引数num_workers: 実行プロセス数（デフォルトは0）
+引数drop_last: 残りデータ数がバッチサイズに満たない場合にスキップするか（True もしくは False）
+推論用のDataLoaderは画像1枚ずつに対して推論を行いたいので、バッチサイズは1、データのshuffleは無、num_workersは0、drop_lastはTrue
+datasetのインスタンス作成
+test_dataset = Test_Datasets(data_transform=test_transforms)
+
+# dataloader作成
+test_dataloader = torch.utils.data.DataLoader(dataset=test_dataset,
+                                                batch_size=1 , 
+                                                shuffle=False , 
+                                                num_workers=0 , 
+                                                drop_last=True )
