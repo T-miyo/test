@@ -1,0 +1,67 @@
+モデル作成1【転移学習有】
+Imagenetというデータを事前に学習したモデルを用いて、学習させる方法を学びます。
+Imagenetで学習したResNet18モデルはPyTorch側が公式サイトにアップロードしているので、
+そのデータをロードすることでパラメータをロードしていきます。
+
+まず、転移学習無の時に設定したモデル作成用関数を確認
+# ライブラリのインポート
+import torch
+import torch.nn as nn
+from torchvision import datasets, models, transforms
+
+
+# 定数設定
+device = "cpu"
+TARGET_NUM = 2
+
+# モデル作成関数の定義
+def get_model(target_num,isPretrained=False):
+
+    model_ft = models.resnet18(pretrained=isPretrained)
+    model_ft.fc = nn.Linear(512, target_num)
+    model_ft = model_ft.to(device)
+    return model_ft
+
+この関数内のmodel_ft = models.resnet18(pretrained=isPretrained)の箇所でモデルを定義しています。
+ここで与えている引数pretrainedにTrueを指定することで、学習済みモデルをダウンロードすることが可能となります。
+事前学習済みモデルは以下のようにして取得することが可能
+pretrained_model = get_model(target_num=TARGET_NUM,isPretrained=True)
+
+今回は学習済みモデルでの推論の際に学んだ、学習済みモデルのロードを行います。
+
+学習済みのモデルをロードする場合は、torch.nn.Module.load_state_dict()を用います。
+load_state_dict()の引数strictをFalseにすると、ロード側のモデルのパラメータを設定する際、ロードされる側にしか存在しないものを無視します。
+
+モデル作成用関数を以下のように修正していきましょう。
+# ライブラリのインポート
+import torch
+import torch.nn as nn
+from torchvision import datasets, models, transforms
+
+
+# 定数設定
+device = "cpu"
+TARGET_NUM = 2
+
+# モデル作成関数の定義
+def get_model(target_num,isPretrained=False):
+
+    if(isPretrained):
+        model_ft = models.resnet18(pretrained=False)
+        model_ft.load_state_dict(torch.load('./resnet18-5c106cde.pth', map_location=lambda storage, loc: storage), strict=True)
+    else:
+        model_ft = models.resnet18(pretrained=False)
+        
+    model_ft.fc = nn.Linear(512, target_num)
+    model_ft = model_ft.to(device)
+    return model_ft
+
+# 事前学習済みResNet18モデルのインスタンス作成
+pretrained_model = get_model(target_num=2,isPretrained=True)
+
+# 事前学習済みモデルを表示してください
+print(pretrained_model)
+関数内にif文を用い、転移学習を行う場合と転移学習を行わない場合にて分岐の処理を追加しました。
+転移学習を行う場合は、1度model_ft = models.resnet18(pretrained=False)にてモデルのひな形を作成し、
+ImageNetでの学習済みモデルの重み（resnet18-5c106cde.pth）をロードしています。
+このように関数を設定することで、転移学習有の場合でも無の場合でも引数isPretrainedの指定を変えるだけでモデル定義をできるようになりました。
