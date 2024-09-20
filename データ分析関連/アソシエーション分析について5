@@ -1,0 +1,23 @@
+MLXTENDのインポート
+アソシエーション分析をする際に、商品間の関係を多くの評価指標により表します。
+その評価指標を使用するために、MLXTENDライブラリをインポートする必要があります。
+このライブラリは、バスケット分析やアソシエーション分析をする際に有効なだけではなくデータの可視化を行ってくれるツールが入っていたりする
+#1 association_rules
+from mlxtend.frequent_patterns import association_rules
+
+#2 apriori
+from mlxtend.frequent_patterns import apriori
+
+支持度の高い同時購買商品の抽出
+同時購買表をもとに、支持度の高い商品を抽出します。支持度とは、２つの商品を同時に購入した確率のことです。
+アプリオリという手法で支持度の値が高い商品間の関係を抽出します。アプリオリは、抽出するデータに条件をつけることで、
+データ数を減らすことができる手法です。今回は、条件を支持度が0.06以上としてデータを抽出
+# 支持度0.06以上のデータをアプリオリによって抽出してみましょう。
+frequent_itemsets = apriori(basket, min_support = 0.06, use_colnames = True)
+
+# 抽出したデータを支持度(support)で降順に並び替えましょう。
+frequent_itemsets = frequent_itemsets.sort_values('support', ascending = False)
+
+print(frequent_itemsets.head())
+また、抽出したデータを降順にソートすると関係性の高いものから見ることができるため非常に便利
+引数ascendingは指定しないと昇順になり、Falseと指定すると降順
