@@ -1,0 +1,25 @@
+同時購買表の作成 2
+前回で、同時購買表を作成することができました。そこで、データを見やすく、簡単にするために
+数値がある場合をTrue、数値がない場合をFalseとして表を作り変えます。
+この際、apply関数を用いて変換を行います。この変換により、各要素を数値からTrue、False のバイナリ値に変換
+データフレーム.apply(lambda x: x > 0)
+ここで、lambda　変数：変数の条件式により条件に一致しているものをTrue、そうでないものをFalseとして結果を出力
+
+# データの読み込み
+import pandas as pd
+data = pd.read_csv('data.tsv', sep='\t')
+
+
+# 欠損値を含む行を削除し、再び変数dataに代入
+data = data.dropna()
+
+# 国名カラムから特定の国のデータを抽出
+Italy = data[data["Country"]=="Italy"]
+
+# 請求書番号と商品情報をキーに商品個数を集計する
+basket = pd.pivot_table(data=Italy,index='InvoiceNo',columns='Description',values='Quantity', aggfunc='sum',fill_value=0)
+
+# データフレームのapply関数で、各要素を数値から　True / False のバイナリ値に変換します。
+basket = basket.apply(lambda x: x > 0)
+
+print(basket)
