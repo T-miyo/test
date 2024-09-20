@@ -1,0 +1,19 @@
+リフト値の算出
+支持度（support）が閾値を超える商品リストを特定できました。
+次に、抽出したリストに対して関連ルール ライブラリを適用して、リフト値（lift）の高い関係を抽出し、顧客の購買行動を確認
+リフト値とは、商品Aと商品Bを同時に購入した際に、商品Bが人気であるのか、商品AとBのセットが人気であるのかを判断する値
+算出方法は、商品Aを購入した後に、商品Bを購入した人の割合÷商品Bを購入した人の割合
+使用する際は、association_rules関数を使用します。この関数の引数であるmetricにliftを代入することでリフト値を求めることができます。
+リフト値が1未満の場合は商品Bが売れている理由は他にあるため1以上のものを抽出させます。よって、閾値の引数である、min_thresholdは1を指定
+
+# 支持度0.06以上のデータを抽出
+frequent_itemsets = apriori(basket, min_support = 0.06, use_colnames = True)
+
+# アソシエーションルールの抽出（リフト値(lift)が1以上のものを抽出）
+rules = association_rules(frequent_itemsets, metric = "lift", min_threshold = 1)
+
+# リフト値でソート
+rules = rules.sort_values('lift', ascending = False)
+
+# 結果確認
+print(rules.head(10))
