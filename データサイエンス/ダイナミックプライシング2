@@ -21,3 +21,96 @@ df["宿泊日"] = pd.to_datetime(df["宿泊日"])
 
 # データの型の表示
 print(df.dtypes)
+
+日時型データからの情報の抽出
+「予約受付日」と「宿泊日」を日時型に変換したことで、日時に関連する操作が可能
+今回のレジャーホテルの場合は、宿泊日の特徴、例えば、旅行シーズンかどうか、
+あるいは平日か休日の違いなどによって、予約のされやすさが異なることが想像できる
+日付から抽出できる情報はいくつかありますが、
+ここでは、予約の傾向を確認するための準備として、月や曜日の情報を予約履歴データの日時型データから抽出
+
+# データの読み込み
+df = pd.read_csv("booking_data.csv", parse_dates=["予約受付日","宿泊日"])
+
+# 月・曜日データの作成
+month_of_stay = df["宿泊日"].apply(lambda x: x.strftime("%m"))
+week_of_stay = df["宿泊日"].apply(lambda x: x.strftime("%a"))
+week_of_reservation = df["予約受付日"].apply(lambda x: x.strftime("%a"))
+
+# 月・曜日データの追加
+df["宿泊月"] = month_of_stay
+df["宿泊曜日"] = week_of_stay
+df["予約受付曜日"] = week_of_reservation
+
+# 先頭10行の表示
+print(df.head(10))
+
+基本統計量の確認
+データの特性・特徴を掴むための手段の1つとして、データの散らばり具合、つまりデータ分布を確認する方法
+データ分布の特性・特徴を数量的に表す指標として使われるのが基本統計量
+代表的な基本統計量には、最大値・最小値・平均値・中央値・最頻値・標準偏差・四分位数など
+例えば、中央値より平均値が大きい場合は、データの分布は値が小さい方向に偏っている可能性がある等
+
+# 数値型データの基本統計量の表示
+print(df.describe())
+
+# 文字列型データの基本統計量の表示
+print(df.describe(include="object"))
+
+# 日時型データの基本統計量の表示
+print(df.describe(include="datetime"))
+
+各宿泊日の予約数の集計
+各宿泊日にどれくらいの予約が入っているかを確認
+
+# データの読み込み
+df = pd.read_csv("booking_data.csv", parse_dates=["予約受付日","宿泊日"])
+
+# 月・曜日データの作成
+df["宿泊月"] = df["宿泊日"].apply(lambda x: x.strftime('%m'))
+df["宿泊曜日"] = df["宿泊日"].apply(lambda x: x.strftime('%a'))
+df["予約受付曜日"] = df["予約受付日"].apply(lambda x: x.strftime('%a'))
+
+# 宿泊日毎の予約数の集計
+vc = df["宿泊日"].value_counts()
+
+# 集計結果の表示
+print(vc)
+
+各宿泊日の予約数の分布の可視化
+人間データがどの範囲にどれだけ存在するかといったデータのばらつき（分布）を確認したい場合は、ヒストグラムが便利です。
+ヒストグラムはデータのばらつきをわかりやすく表現するためのグラフの1つで、横軸に階級、縦軸に度数をとり、
+各階級の度数を長方形の柱で表しが直感的に理解できるよう、膨大なデータの持つ意味をグラフを用いて視覚化
+例えば、製造している部品の寸法測定値の分布を確認したり、コールセンターの応答時間の分布を確認するようなシーンで利用
+
+# データの読み込み
+df = pd.read_csv("booking_data.csv", parse_dates=["予約受付日","宿泊日"])
+
+# 月・曜日データの作成
+df["宿泊月"] = df["宿泊日"].apply(lambda x: x.strftime('%m'))
+df["宿泊曜日"] = df["宿泊日"].apply(lambda x: x.strftime('%a'))
+df["予約受付曜日"] = df["予約受付日"].apply(lambda x: x.strftime('%a'))
+
+# 宿泊日毎の予約数の集計
+vc = df["宿泊日"].value_counts()
+
+# matplotlib.pyplotのインポート
+import matplotlib.pyplot as plt
+
+# グラフの作成
+vc.hist()
+
+# グラフの表示
+plt.show()
+
+月・曜日と予約数の関係
+基本統計量からは、宿泊日が8月や土曜日の場合は予約が多く、また土曜日は予約の受付も多いことが分かっている
+# 月・曜日データの作成
+df["宿泊月"] = df["宿泊日"].apply(lambda x: x.strftime('%m'))
+df["宿泊曜日"] = df["宿泊日"].apply(lambda x: x.strftime('%a'))
+df["予約受付曜日"] = df["予約受付日"].apply(lambda x: x.strftime('%a'))
+
+# 月・曜日と予約数の集計結果の表示
+print(df["宿泊月"].value_counts())
+print(df["宿泊曜日"].value_counts())
+print(df["予約受付曜日"].value_counts())
