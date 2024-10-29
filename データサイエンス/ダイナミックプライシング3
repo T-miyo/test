@@ -1,0 +1,170 @@
+ブッキングカーブはレベニューマネジメントの一環として活用され、宿泊施設の予約状況や価格設定の最適化に役立てられます。
+レベニューマネジメントは、需要の予測と適切な販売管理によって収益を最大化する経営手法
+レベニューマネジメントは、「商品の完売＝収益の最大化」という考え方に基づいています。
+通常料金での売上確保に向けて一定の在庫を保持しつつ、余剰部分を割安料金で売り切る戦略
+
+ブッキングカーブとは、宿泊当日までにどのくらい予約が入っているのか、
+予約のペースや予約の傾向を把握できるグラフです。グラフは縦軸を稼働率、横軸を宿泊当日までの残り日数で表し、
+予約推移の軌跡が弧を描くことからブッキングカーブと言われています。
+
+ブッキングカーブが、「予約の入り具合を知る」「予約の傾向を知る」「状況に応じた適正価格を知る」ことができる
+ブッキングカーブは過去の同月同日の予約データを参照し「これまで同じような状況でこのくらいの価格で予約が取れたので、
+おおよそこの価格が最適です」とヒントを提示してくれます。
+つまり、ブッキングカーブは過去の予約データから客室需要を予測し、現在の相場に対するベストな価格を提案してくれる
+
+理想的なブッキングカーブは、予約受付開始日からコンスタントに予約が入り、宿泊日の3日前までに予約が埋まるものと定義します。
+この理想的なブッキングカーブと、実際のブッキングカーブを比較することで、価格戦略の改善点を見つけることができます。
+
+ブッキングカーブの作成
+# pandasのインポート
+import pandas as pd
+
+# データの読み込み
+df = pd.read_csv("booking_data.csv", parse_dates=["予約受付日","宿泊日"])
+
+# 月・曜日データの作成
+df["宿泊月"] = df["宿泊日"].apply(lambda x: x.strftime('%m'))
+df["宿泊曜日"] = df["宿泊日"].apply(lambda x: x.strftime('%a'))
+df["予約受付曜日"] = df["予約受付日"].apply(lambda x: x.strftime('%a'))
+
+# 指定日付による絞り込み
+df_part = df[df["宿泊日"] == "2019-08-01"]
+
+# 予約受付日毎の予約数の集計
+vc = df_part["予約受付日"].value_counts()
+
+# 累計の予約数の計算
+vcc = vc.sort_index().cumsum()
+
+# matplotlib.pyplotのインポート
+import matplotlib.pyplot as plt
+
+# グラフの作成
+vcc.plot()
+
+# グラフの表示
+plt.show()
+
+ブッキングカーブの修正
+前回作成したブッキングカーブは、折れ線の粒度が粗く、
+予約受付開始から最初の予約が入るまでの期間と最後の予約が入ってから
+宿泊日までの期間の動きが表現されていないといった問題があり
+折れ線グラフを描く場合、Seriesのインデックスである予約受付日が横軸、
+値である累計予約数が縦軸とみなされますが、集計したデータには予約が行われなかった日付が出現しないことが原因
+この問題を解消するために、集計結果に予約のなかった日付を補完
+# 指定日付による絞り込み
+df_part = df[df["宿泊日"] == "2019-08-01"]
+
+# 予約受付日毎の予約数の集計
+vc = df_part["予約受付日"].value_counts()
+
+# datetimeのインポート
+import datetime as dt
+
+# 宿泊日の日付型オブジェクトの作成
+dt_date = dt.date(year=2019, month=8, day=1) 
+
+# 予約受付開始日の計算
+start_date = dt_date - dt.timedelta(days = 30)
+
+# 予約受付終了日の計算
+end_date = dt_date - dt.timedelta(days = 1)
+
+# 連続する日付の作成
+new_index = pd.date_range(start=start_date, end=end_date, freq="D")
+
+# 集計値のインデックスの再構築
+vcr = vc.reindex(new_index, fill_value=0)
+
+# 累計の予約数の計算
+vcc = vcr.sort_index().cumsum()
+
+# matplotlib.pyplotのインポート
+import matplotlib.pyplot as plt
+
+# グラフの作成
+vcc.plot()
+
+# グラフの表示
+plt.show()
+
+ブッキングカーブの比較・解釈
+ここでは、異なる3つの宿泊日のブッキングカーブを作成し、グラフを比較
+pythonでは、それぞれの折れ線のplot()を実行すれば、1つのキャンバスに複数のグラフを重ねて描画できます。
+3つの折れ線の形状を比較しやすくするには横軸を統一させることが望ましいですが、
+3つの宿泊日に対応する集計結果はインデックスの予約受付日の期間がバラバラです。
+このため、横軸を、予約受付日ではなく予約受付開始日からの経過日数に変更することで統一
+# datetimeのインポート
+import datetime as dt
+
+# 宿泊日の指定
+str_date1 = "2019-08-25"
+str_date2 = "2019-04-27"
+str_date3 = "2019-11-11"
+
+# 宿泊日の日時型オブジェクトの作成
+dt_date1 = pd.Timestamp(str_date1)
+dt_date2 = pd.Timestamp(str_date2)
+dt_date3 = pd.Timestamp(str_date3)
+ 
+# 予約受付開始日から宿泊日前日までの連続する日付の作成
+new_index1 = pd.date_range(start=dt_date1 - dt.timedelta(days=30), end=dt_date1 - dt.timedelta(days=1), freq='D')
+new_index2 = pd.date_range(start=dt_date2 - dt.timedelta(days=30), end=dt_date2 - dt.timedelta(days=1), freq='D')
+new_index3 = pd.date_range(start=dt_date3 - dt.timedelta(days=30), end=dt_date3 - dt.timedelta(days=1), freq='D')
+
+# 累計の予約数の作成
+vcc1 = df[df["宿泊日"] == dt_date1]["予約受付日"].value_counts().reindex(new_index1, fill_value=0).sort_index().cumsum().reset_index(drop=True)
+vcc2 = df[df["宿泊日"] == dt_date2]["予約受付日"].value_counts().reindex(new_index2, fill_value=0).sort_index().cumsum().reset_index(drop=True)
+vcc3 = df[df["宿泊日"] == dt_date3]["予約受付日"].value_counts().reindex(new_index3, fill_value=0).sort_index().cumsum().reset_index(drop=True)
+
+# グラフの作成
+import matplotlib.pyplot as plt
+vcc1.plot(label=str_date1)
+vcc2.plot(label=str_date2)
+vcc3.plot(label=str_date3)
+plt.title("ブッキングカーブ")
+plt.xlabel("予約受付開始からの経過日数")
+plt.ylabel("予約された部屋の数")
+plt.legend()
+plt.grid()
+plt.show()
+
+理想的なブッキングカーブ
+理想的なブッキングカーブは業態によって異なります。ホテル業界の中でも、
+ビジネスホテルの場合は宿泊日の約1週間前から予約が増える傾向があり、
+一方でレジャーホテルの場合は宿泊日の2,3ヶ月前からコンスタントに予約が入る傾向があります。
+ブッキングカーブの一般的な特徴としては、予約の直前にキャンセルが発生して稼働率が下げに転じるという特徴もあります。
+キャンセルが発生すると、売上の損失や対応に要する余分なコストなど、様々なデメリットが出てきます。
+このホテルでは宿泊日2日前からは宿泊料金の100%のキャンセル料を規定しているため、
+とりあえず宿泊日3日前に予約が埋まっている状態であれば売上に影響はありません。
+理想的なブッキングカーブとして以下の条件を設定する
+・予約受付開始日からコンスタントに予約が入る
+・宿泊日の3日前までに予約が埋まる
+折れ線グラフを描く場合、横軸（30点）と縦軸（予約数）に対応するデータを用意する必要があるためそれを作成
+
+# numpyのインポート
+import numpy as np
+
+# 0から29を30等分した数値配列の作成
+x = np.linspace(0, 29, 30)
+
+# 0から20を28等分した数値配列の作成
+tmp_y = np.linspace(0, 20, 28)
+
+# 要素の追加
+y = np.append(tmp_y, [20, 20])
+
+# matplotlibのインポート
+import matplotlib.pyplot as plt
+
+# 折れ線グラフの作成
+plt.plot(x, y)
+
+# 横軸の表示領域の指定
+plt.xlim(0,29)
+
+# 縦軸の表示領域の指定
+plt.ylim(0,)
+
+# グラフの表示
+plt.show()
