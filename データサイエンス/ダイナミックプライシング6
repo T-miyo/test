@@ -1,0 +1,170 @@
+売上の確認
+ダイナミックプライシングは導入したらそれで終わりではなく、PDCAを回して改善を繰り返していくことが非常に重要
+特に運用初期は設計に誤りがないかロジックが不十分ではないかなど、実際に運用した結果をこまめにチェックする必要がある
+宿泊日が2020年3月以降の宿泊料金に対してダイナミックプライシングが適用されるよう（予約受付開始日は2020年1月30日から）、
+システムの設定を行いました。運用を開始してから2ヶ月が経過した2020年4月現在、宿泊日が3月の予約履歴データを確認してみる
+今回、比較のため、2019年3月のデータも合わせて使用することにします。
+なお、宿泊料金が変動することになったため、2020年3月のデータには宿泊料金カラムが追加
+ダイナミックプライシングの目的である、収益の最大化が達成できているかを確認
+予約履歴データには1予約につき1レコード（1行）が記録されており、
+予約時の宿泊料金もデータに追加されているため、宿泊料金の合計を計算すれば売上を求めることができます。
+
+# pandasのインポート
+import pandas as pd
+
+# データの読み込み
+df_201903 = pd.read_csv("booking_data_201903.csv")
+df_202003 = pd.read_csv("booking_data_202003.csv")
+
+# 売上の計算
+sales_201903 = df_201903.shape[0] * 10000
+sales_202003 = df_202003["宿泊料金"].sum()
+
+# 売上の表示
+print(sales_201903)
+print(sales_202003)
+
+ブッキングカーブの評価値の確認
+次に、2019年と2020年とで、各宿泊日のブッキングカーブと理想のブッキングカーブとのズレがどう変わったかを確認
+指標はこれまでと同様にMAE（Mean Absolute Error）
+評価対象の3月は日数が31日あるため、宿泊日も31通り存在することになります。
+つまりブッキングカーブも31通りになり、理想のブッキングカーブとのMAEも31パターン計算できることになります。
+MAEを1つ1つ算出することもできますが、それでは非常に手間がかかるため、同様の処理を繰り返すことができるfor文を使用する
+2019年と2020年それぞれ31通りのMAEを求めたとしても、そのままでは定量的な比較が難しいため、今回はMAEの平均値を比較する
+for文を使用して31日分のMAEの計算を行い、最後にその平均値を求めるわけですが、
+各宿泊日に対応するMAEを格納する変数にはリストというデータ型を使うと便利
+最初に中身が空のリストを作成しておき、リストのappend()関数を使用して、新たな要素、ここでは計算したMAEを順次追加
+リスト内の全要素の平均値を求める方法はいくつかありますが、ここのではnumpyのmean()関数を使用
+
+# pandasのインポート
+import pandas as pd
+
+# データの読み込み
+df_201903 = pd.read_csv("booking_data_201903.csv", parse_dates=["予約受付日","宿泊日"])
+df_202003 = pd.read_csv("booking_data_202003.csv", parse_dates=["予約受付日","宿泊日"])
+
+# numpyのインポート
+import numpy as np
+
+# 理想のブッキングカーブの作成
+x = np.linspace(0,29,30)
+tmp_y = np.linspace(0,20,28)
+y = np.append(tmp_y, [20,20])
+
+# datetimeのインポート
+import datetime as dt
+
+# sklearn.metricsのインポート
+from sklearn import metrics
+
+# 予約受付開始日から宿泊日前日までの連続する日付の作成
+stay_dates_201903 = pd.date_range(start="2019-03-01", end="2019-03-31" , freq='D')
+stay_dates_202003 = pd.date_range(start="2020-03-01", end="2020-03-31" , freq='D')
+
+# MAE格納用の空のリストの作成
+mae_201903 = []
+mae_202003 = []
+
+# 2019年3月の各宿泊日のブッキングカーブの作成と評価
+for stay_date in stay_dates_201903:
+    dt_date = pd.Timestamp(stay_date)
+    new_index = pd.date_range(start=dt_date - dt.timedelta(days=30), end=dt_date - dt.timedelta(days=1) , freq='D')
+    # 累計の予約数の作成
+    vcc = df_201903[df_201903["宿泊日"] == dt_date]["予約受付日"].value_counts().reindex(new_index, fill_value=0).sort_index().cumsum().reset_index(drop=True)
+    # MAEの計算
+    mae = metrics.mean_absolute_error(y, vcc)
+    # リストへのMAEの格納
+    mae_201903.append(mae)
+    
+# 2020年3月の各宿泊日のブッキングカーブの作成と評価
+for stay_date in stay_dates_202003:
+    dt_date = pd.Timestamp(stay_date)
+    new_index = pd.date_range(start=dt_date - dt.timedelta(days=30), end=dt_date - dt.timedelta(days=1) , freq='D')
+    # 累計の予約数の作成
+    vcc = df_202003[df_202003["宿泊日"] == dt_date]["予約受付日"].value_counts().reindex(new_index, fill_value=0).sort_index().cumsum().reset_index(drop=True)
+    # MAEの計算
+    mae = metrics.mean_absolute_error(y, vcc)
+    # リストへのMAEの格納
+    mae_202003.append(mae)
+
+# MAEの平均の表示
+print(np.mean(mae_201903))
+print(np.mean(mae_202003))
+
+ブッキングカーブの可視化
+繰り返し処理を行うfor文を使用して、31日分のブッキングカーブを描いてみます。
+複数のグラフを並べて表示させたい場合、一般的に、matplotlib.pyplotのsubplots()関数を使用します。
+引数に指定した、行数 × 列数 のグリッドにグラフ領域が分割され、
+プロット番号の位置に規則正しくグラフを配置することができます。
+# pandasのインポート
+import pandas as pd
+
+# データの読み込み
+df_201903 = pd.read_csv("booking_data_201903.csv", parse_dates=["予約受付日","宿泊日"])
+df_202003 = pd.read_csv("booking_data_202003.csv", parse_dates=["予約受付日","宿泊日"])
+
+# numpyのインポート
+import numpy as np
+
+# 理想のブッキングカーブの作成
+x = np.linspace(0,29,30)
+tmp_y = np.linspace(0,20,28)
+y = np.append(tmp_y, [20,20])
+
+# datetimeのインポート
+import datetime as dt
+
+# 予約受付開始日から宿泊日前日までの連続する日付の作成
+stay_dates_201903 = pd.date_range(start="2019-03-01", end="2019-03-31" , freq='D')
+stay_dates_202003 = pd.date_range(start="2020-03-01", end="2020-03-31" , freq='D')
+
+# matplotlib.pyplotのインポート
+import matplotlib.pyplot as plt
+
+# キャンバスとグラフの作成
+fig, ax = plt.subplots(1,2,figsize=(12,5),sharey=True)
+
+# 2019年3月全宿泊日のブッキングカーブの作成・描画
+for stay_date in stay_dates_201903:
+    dt_date = pd.Timestamp(stay_date)
+    new_index = pd.date_range(start=dt_date - dt.timedelta(days=30), end=dt_date - dt.timedelta(days=1) , freq='D')
+    vcc = df_201903[df_201903["宿泊日"] == dt_date]["予約受付日"].value_counts().reindex(new_index, fill_value=0).sort_index().cumsum().reset_index(drop=True)
+    vcc.plot(ax=ax[0], linewidth=0.5)
+
+# 理想のブッキングカーブの描画
+ax[0].plot(x,y,linewidth=2)
+# グラフの装飾
+ax[0].set_title("2019年3月のブッキングカーブ")
+ax[0].set_xlabel("予約受付開始からの経過日数")
+ax[0].set_ylabel("予約された部屋の数")
+ax[0].set_ylim(0,)
+
+# 2020年3月全宿泊日のブッキングカーブの作成・描画
+for stay_date in stay_dates_202003:
+    dt_date = pd.Timestamp(stay_date)
+    new_index = pd.date_range(start=dt_date - dt.timedelta(days=30), end=dt_date - dt.timedelta(days=1) , freq='D')
+    vcc = df_202003[df_202003["宿泊日"] == dt_date]["予約受付日"].value_counts().reindex(new_index, fill_value=0).sort_index().cumsum().reset_index(drop=True)
+    vcc.plot(ax=ax[1], linewidth=0.5)
+        
+# 理想のブッキングカーブの描画
+ax[1].plot(x,y,linewidth=2)
+ax[1].set_title("2020年3月のブッキングカーブ")
+# グラフの装飾
+ax[1].set_xlabel("予約受付開始からの経過日数")
+
+# グラフの表示
+plt.show()
+
+今後の課題
+理想とのズレが大きかったブッキングカーブについて原因を調査してみたところ、次の事が分かりました。
+
+大きく上振れしていたブッキングカーブ
+
+3/20（金）：国民の休日「春分の日」で、3連休の初日ということもあり、大きな需要につながった。特に予約受付開始後の予約が多く、十分に値上げする前に多くの部屋が売れた。
+3/27（金）：桜の名所として有名な近隣の公園で、大規模な花見イベントが催されたため、郊外からの宿泊者も多く訪れた。
+大きく下振れしていたブッキングカーブ
+
+3/8（日）：季節外れの寒波の影響で大雪が降った（早い段階で荒天となる予報も発表されていた）
+この結果を踏まえて、検討課題を考えてみましょう。
+
+このとき、figureオブジェクトとaxesオブジェクトが同時に作成され、それらが戻り値として返ってきます。figureオブジェクトはたくさんのグラフを描くための大きなキャンバス、axesオブジェクトはキャンバスの中のグラフを描く領域とイメージ
